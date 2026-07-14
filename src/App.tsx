@@ -35,9 +35,6 @@ function RoleGuard({ children, role }: { children: React.ReactNode; role: 'clien
 // ---------------------------------------------------------------------------
 
 function CleanRootRedirect() {
-  const role = api.getRole();
-  if (role === 'client') return <Navigate to="/clean/client" replace />;
-  if (role === 'cleaner') return <Navigate to="/clean/cleaner" replace />;
   return <RoleSelect />;
 }
 
