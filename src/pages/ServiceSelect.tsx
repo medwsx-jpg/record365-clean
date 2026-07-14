@@ -27,10 +27,7 @@ export default function ServiceSelect() {
         >
           <div className="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center" style={{ backgroundColor: '#f97316' }}>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15.5 2.5L14 5l2 2.5L13 9l1.5 2.5" />
-              <path d="M10 2.5L8.5 5l2 2.5L7.5 9 9 11.5" />
-              <path d="M4.5 13h15" />
-              <path d="M6 13v5a3 3 0 003 3h6a3 3 0 003-3v-5" />
+              <path d="M12 3l1.912 5.813a2 2 0 001.272 1.278L21 12l-5.816 1.91a2 2 0 00-1.272 1.277L12 21l-1.912-5.813a2 2 0 00-1.272-1.278L3 12l5.816-1.91a2 2 0 001.272-1.277L12 3z" />
             </svg>
           </div>
           <h2 className="text-sm font-semibold text-gray-900">슥싹 매칭</h2>
