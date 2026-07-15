@@ -4,6 +4,7 @@ import type { CleaningRequest, Photo } from '../../types';
 import { getZoneLabel } from '../../types';
 import { api } from '../../store';
 import PhotoUploader from '../../components/PhotoUploader';
+import PhotoLightbox from '../../components/PhotoLightbox';
 
 export default function CleaningProgress() {
   const { id } = useParams<{ id: string }>();
@@ -11,6 +12,7 @@ export default function CleaningProgress() {
   const [request, setRequest] = useState<CleaningRequest | null>(null);
   const [afterPhotos, setAfterPhotos] = useState<Photo[]>([]);
   const [activeZone, setActiveZone] = useState<string>('');
+  const [lightbox, setLightbox] = useState<{ photos: { id: string; dataUrl: string; label?: string }[]; index: number } | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -44,10 +46,16 @@ export default function CleaningProgress() {
   const beforePhotos = request.photos.filter((p) => p.type === 'before');
   const zones = [...new Set(beforePhotos.map((p) => p.zone))];
 
-  // 모든 구역에 after 사진이 있는지 확인
   const allZonesHaveAfter = zones.length > 0 && zones.every(
     (zone) => afterPhotos.filter((p) => p.zone === zone && p.type === 'after').length > 0
   );
+
+  const openLightbox = (photoList: typeof beforePhotos, clickedIndex: number, labelPrefix: string) => {
+    setLightbox({
+      photos: photoList.map((p) => ({ id: p.id, dataUrl: p.dataUrl, label: `${labelPrefix} - ${getZoneLabel(p.zone)}` })),
+      index: clickedIndex,
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 max-w-[480px] mx-auto pb-24">
@@ -58,17 +66,14 @@ export default function CleaningProgress() {
         <h1 className="text-lg font-bold text-gray-900">청소 진행 중</h1>
       </header>
 
-      {/* 안내 */}
       <div className="bg-blue-50 border-b border-blue-100 px-4 py-3">
         <p className="text-sm text-blue-700 font-medium">의뢰자가 촬영한 구역과 같은 위치에서 촬영해 주세요.</p>
         <p className="text-xs text-blue-500 mt-1">모든 구역의 After 사진을 등록해야 완료할 수 있습니다.</p>
       </div>
 
-      {/* Before/After 사진 비교 */}
       <section className="bg-white mt-2 py-4">
         <h2 className="px-4 text-sm font-semibold text-gray-900 mb-3">Before / After 사진</h2>
 
-        {/* Zone Tabs */}
         <div className="overflow-x-auto scrollbar-hide px-4">
           <div className="flex gap-1 min-w-max py-1">
             {zones.map((zone) => {
@@ -92,13 +97,13 @@ export default function CleaningProgress() {
         </div>
 
         <div className="mt-3 px-4">
-          {/* Before */}
           {beforePhotos.filter((p) => p.zone === activeZone).length > 0 && (
             <div className="mb-4">
-              <p className="text-xs font-medium text-gray-500 mb-2">Before</p>
+              <p className="text-xs font-medium text-gray-500 mb-2">Before (터치하면 크게 볼 수 있습니다)</p>
               <div className="grid grid-cols-2 gap-2">
-                {beforePhotos.filter((p) => p.zone === activeZone).map((photo) => (
-                  <div key={photo.id} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200">
+                {beforePhotos.filter((p) => p.zone === activeZone).map((photo, idx) => (
+                  <div key={photo.id} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 cursor-pointer active:opacity-80"
+                    onClick={() => openLightbox(beforePhotos.filter((p) => p.zone === activeZone), idx, 'Before')}>
                     <img src={photo.dataUrl} alt="Before" className="w-full h-full object-cover" />
                     <div className="absolute top-1 left-1 bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded">Before</div>
                   </div>
@@ -107,7 +112,6 @@ export default function CleaningProgress() {
             </div>
           )}
 
-          {/* After */}
           <div>
             <p className="text-xs font-medium text-gray-500 mb-2">After</p>
             <PhotoUploader photos={afterPhotos} onPhotosChange={handleAfterPhotosChange} zones={[activeZone]} mode="after" guidePhotos={beforePhotos} />
@@ -115,7 +119,6 @@ export default function CleaningProgress() {
         </div>
       </section>
 
-      {/* 완료 버튼 */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 max-w-[480px] mx-auto z-50">
         {!allZonesHaveAfter && (
           <p className="text-xs text-amber-600 text-center mb-2">모든 구역의 After 사진을 등록해주세요</p>
@@ -125,6 +128,10 @@ export default function CleaningProgress() {
           청소 완료
         </button>
       </div>
+
+      {lightbox && (
+        <PhotoLightbox photos={lightbox.photos} initialIndex={lightbox.index} onClose={() => setLightbox(null)} />
+      )}
     </div>
   );
 }

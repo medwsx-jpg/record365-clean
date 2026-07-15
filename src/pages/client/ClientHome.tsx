@@ -5,10 +5,9 @@ import { CATEGORY_LABELS } from '../../types';
 import { api } from '../../store';
 import BottomNav from '../../components/BottomNav';
 
-const STATUS_CONFIG: Record<
-  RequestStatus,
-  { label: string; bg: string; text: string }
-> = {
+const AUTO_COMPLETE_HOURS = 12;
+
+const STATUS_CONFIG: Record<RequestStatus, { label: string; bg: string; text: string }> = {
   pending: { label: '대기중', bg: 'bg-gray-100', text: 'text-gray-600' },
   matching: { label: '매칭중', bg: 'bg-yellow-100', text: 'text-yellow-700' },
   matched: { label: '매칭완료', bg: 'bg-green-100', text: 'text-green-700' },
@@ -20,9 +19,7 @@ const STATUS_CONFIG: Record<
 function StatusBadge({ status }: { status: RequestStatus }) {
   const cfg = STATUS_CONFIG[status];
   return (
-    <span
-      className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${cfg.bg} ${cfg.text}`}
-    >
+    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${cfg.bg} ${cfg.text}`}>
       {cfg.label}
     </span>
   );
@@ -32,16 +29,47 @@ function formatPrice(n: number) {
   return n.toLocaleString('ko-KR') + '원';
 }
 
+function getRemainingTime(completedAt?: string): string | null {
+  if (!completedAt) return null;
+  const deadline = new Date(completedAt).getTime() + AUTO_COMPLETE_HOURS * 60 * 60 * 1000;
+  const now = Date.now();
+  const remaining = deadline - now;
+  if (remaining <= 0) return null;
+  const hours = Math.floor(remaining / (1000 * 60 * 60));
+  const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+  if (hours > 0) return `${hours}시간 ${minutes}분`;
+  return `${minutes}분`;
+}
+
 export default function ClientHome() {
   const navigate = useNavigate();
   const [requests, setRequests] = useState<CleaningRequest[]>([]);
+  const [, setTick] = useState(0);
 
   useEffect(() => {
-    setRequests(api.getRequests());
-    const interval = setInterval(() => {
+    const loadAndAutoComplete = () => {
+      const reqs = api.getRequests();
+      // 12시간 경과한 waiting_confirm → 자동 완료
+      reqs.forEach((r) => {
+        if (r.status === 'waiting_confirm' && r.completedAt) {
+          const deadline = new Date(r.completedAt).getTime() + AUTO_COMPLETE_HOURS * 60 * 60 * 1000;
+          if (Date.now() >= deadline) {
+            api.updateRequest(r.id, { status: 'completed' });
+          }
+        }
+      });
       setRequests(api.getRequests());
-    }, 3000);
+    };
+
+    loadAndAutoComplete();
+    const interval = setInterval(loadAndAutoComplete, 3000);
     return () => clearInterval(interval);
+  }, []);
+
+  // 남은 시간 표시를 위해 1분마다 리렌더
+  useEffect(() => {
+    const timer = setInterval(() => setTick((t) => t + 1), 60000);
+    return () => clearInterval(timer);
   }, []);
 
   const active = requests.filter((r) =>
@@ -87,47 +115,60 @@ export default function ClientHome() {
             </div>
           ) : (
             <div className="space-y-3">
-              {active.map((req) => (
-                <button
-                  key={req.id}
-                  onClick={() => handleCardClick(req)}
-                  className="w-full bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-left active:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-800">
-                      {CATEGORY_LABELS[req.category]} · {req.date}
-                    </span>
-                    <StatusBadge status={req.status} />
-                  </div>
-                  <p className="text-sm text-gray-600 truncate">{req.address}</p>
-                  <p className="text-sm font-semibold text-green-600 mt-1">{formatPrice(req.price)}</p>
-                  {req.status === 'matched' && (
-                    <div className="mt-2 bg-green-50 rounded-lg px-3 py-2 flex items-center gap-2">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" className="shrink-0">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      <span className="text-xs text-green-700 font-medium">청소자가 매칭되었습니다. 청소일을 기다려주세요.</span>
+              {active.map((req) => {
+                const remaining = req.status === 'waiting_confirm' ? getRemainingTime(req.completedAt) : null;
+                return (
+                  <button
+                    key={req.id}
+                    onClick={() => handleCardClick(req)}
+                    className="w-full bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-left active:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-800">
+                        {CATEGORY_LABELS[req.category]} · {req.date}
+                      </span>
+                      <StatusBadge status={req.status} />
                     </div>
-                  )}
-                  {req.status === 'waiting_confirm' && (
-                    <div className="mt-2 bg-orange-50 rounded-lg px-3 py-2 flex items-center gap-2">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2.5" className="shrink-0">
-                        <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-                      </svg>
-                      <span className="text-xs text-orange-700 font-medium">청소가 완료되었습니다. 결과를 확인해주세요!</span>
-                    </div>
-                  )}
-                  {req.status === 'in_progress' && (
-                    <div className="mt-2 flex items-center gap-1.5">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                      <span className="text-xs text-blue-600">청소자가 작업 중입니다</span>
-                    </div>
-                  )}
-                  {req.cleanerName && req.status !== 'matching' && (
-                    <p className="text-xs text-gray-400 mt-1">청소자: {req.cleanerName}</p>
-                  )}
-                </button>
-              ))}
+                    <p className="text-sm text-gray-600 truncate">{req.address}</p>
+                    <p className="text-sm font-semibold text-green-600 mt-1">{formatPrice(req.price)}</p>
+                    {req.status === 'matched' && (
+                      <div className="mt-2 bg-green-50 rounded-lg px-3 py-2 flex items-center gap-2">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" className="shrink-0">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span className="text-xs text-green-700 font-medium">청소자가 매칭되었습니다. 청소일을 기다려주세요.</span>
+                      </div>
+                    )}
+                    {req.status === 'waiting_confirm' && (
+                      <div className="mt-2 bg-orange-50 rounded-lg px-3 py-2 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2.5" className="shrink-0">
+                            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                          </svg>
+                          <span className="text-xs text-orange-700 font-medium">청소가 완료되었습니다. 결과를 확인해주세요!</span>
+                        </div>
+                        {remaining && (
+                          <div className="flex items-center gap-1.5 pl-5">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9a3412" strokeWidth="2" className="shrink-0">
+                              <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                            </svg>
+                            <span className="text-[11px] text-orange-800">{remaining} 이후 자동 완료됩니다</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {req.status === 'in_progress' && (
+                      <div className="mt-2 flex items-center gap-1.5">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                        <span className="text-xs text-blue-600">청소자가 작업 중입니다</span>
+                      </div>
+                    )}
+                    {req.cleanerName && req.status !== 'matching' && (
+                      <p className="text-xs text-gray-400 mt-1">청소자: {req.cleanerName}</p>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
         </section>

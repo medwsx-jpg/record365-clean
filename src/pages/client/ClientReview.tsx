@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import type { CleaningRequest } from '../../types';
 import { getZoneLabel, CATEGORY_LABELS } from '../../types';
 import { api } from '../../store';
+import PhotoLightbox from '../../components/PhotoLightbox';
 
 type ViewMode = 'side' | 'before' | 'after';
 
@@ -13,6 +14,7 @@ export default function ClientReview() {
   const [activeZone, setActiveZone] = useState<string>('');
   const [viewMode, setViewMode] = useState<ViewMode>('side');
   const [confirmed, setConfirmed] = useState(false);
+  const [lightbox, setLightbox] = useState<{ photos: { id: string; dataUrl: string; label?: string }[]; index: number } | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -43,6 +45,14 @@ export default function ClientReview() {
   const fee = Math.round(price * 0.15);
   const payout = price - fee;
 
+  // 라이트박스용 사진 배열 생성
+  const openLightbox = (photoList: typeof beforePhotos, clickedIndex: number, labelPrefix: string) => {
+    setLightbox({
+      photos: photoList.map((p) => ({ id: p.id, dataUrl: p.dataUrl, label: `${labelPrefix} - ${getZoneLabel(p.zone)}` })),
+      index: clickedIndex,
+    });
+  };
+
   const handleConfirm = () => {
     api.updateRequest(request.id, { status: 'completed' });
     setConfirmed(true);
@@ -64,10 +74,7 @@ export default function ClientReview() {
           <p className="text-xs text-gray-400 mt-1">수수료 {fee.toLocaleString('ko-KR')}원 차감</p>
         </div>
         <p className="text-xs text-gray-400 mb-8">이용해주셔서 감사합니다.</p>
-        <button
-          onClick={() => navigate('/clean/client')}
-          className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3.5 rounded-xl transition-colors"
-        >
+        <button onClick={() => navigate('/clean/client')} className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3.5 rounded-xl transition-colors">
           홈으로
         </button>
       </div>
@@ -76,17 +83,13 @@ export default function ClientReview() {
 
   return (
     <div className="min-h-screen bg-gray-50 max-w-[480px] mx-auto pb-24">
-      {/* Header */}
       <header className="sticky top-0 z-40 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="text-gray-600">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
         </button>
         <h1 className="text-lg font-bold text-gray-900">청소 결과 확인</h1>
       </header>
 
-      {/* Status Banner */}
       <div className="bg-blue-50 border-b border-blue-100 px-4 py-3">
         <div className="flex items-center gap-2">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" className="shrink-0">
@@ -96,7 +99,6 @@ export default function ClientReview() {
         </div>
       </div>
 
-      {/* Request Info */}
       <section className="bg-white mt-2 p-4">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold text-gray-900">의뢰 정보</h2>
@@ -112,12 +114,10 @@ export default function ClientReview() {
         </div>
       </section>
 
-      {/* Before/After Comparison */}
       <section className="bg-white mt-2 py-4">
         <h2 className="px-4 text-sm font-semibold text-gray-900 mb-1">Before / After 비교</h2>
-        <p className="px-4 text-xs text-gray-400 mb-3">구역별로 청소 전후를 비교해보세요</p>
+        <p className="px-4 text-xs text-gray-400 mb-3">사진을 터치하면 크게 볼 수 있습니다</p>
 
-        {/* Zone Tabs */}
         {zones.length > 0 && (
           <div className="overflow-x-auto scrollbar-hide px-4">
             <div className="flex gap-1 min-w-max py-1">
@@ -126,19 +126,10 @@ export default function ClientReview() {
                 const bCount = beforePhotos.filter((p) => p.zone === zone).length;
                 const aCount = afterPhotos.filter((p) => p.zone === zone).length;
                 return (
-                  <button
-                    key={zone}
-                    onClick={() => setActiveZone(zone)}
-                    className={`px-4 py-2 text-sm rounded-full whitespace-nowrap transition-colors ${
-                      isActive
-                        ? 'bg-green-500 text-white font-semibold'
-                        : 'bg-gray-100 text-gray-600'
-                    }`}
-                  >
+                  <button key={zone} onClick={() => setActiveZone(zone)}
+                    className={`px-4 py-2 text-sm rounded-full whitespace-nowrap transition-colors ${isActive ? 'bg-green-500 text-white font-semibold' : 'bg-gray-100 text-gray-600'}`}>
                     {getZoneLabel(zone)}
-                    <span className={`ml-1 text-xs ${isActive ? 'text-green-100' : 'text-gray-400'}`}>
-                      ({aCount}/{bCount})
-                    </span>
+                    <span className={`ml-1 text-xs ${isActive ? 'text-green-100' : 'text-gray-400'}`}>({aCount}/{bCount})</span>
                   </button>
                 );
               })}
@@ -146,39 +137,34 @@ export default function ClientReview() {
           </div>
         )}
 
-        {/* View Mode Toggle */}
         <div className="flex gap-1 px-4 mt-3 mb-3">
           {(['side', 'before', 'after'] as ViewMode[]).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setViewMode(mode)}
-              className={`flex-1 py-1.5 text-xs rounded-full font-medium transition-colors ${
-                viewMode === mode ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
-              }`}
-            >
+            <button key={mode} onClick={() => setViewMode(mode)}
+              className={`flex-1 py-1.5 text-xs rounded-full font-medium transition-colors ${viewMode === mode ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
               {mode === 'side' ? '나란히 보기' : mode === 'before' ? 'Before' : 'After'}
             </button>
           ))}
         </div>
 
-        {/* Photo Comparison */}
         <div className="px-4">
           {viewMode === 'side' ? (
             <div className="space-y-3">
-              {currentBeforePhotos.map((beforePhoto, index) => {
-                const afterPhoto = currentAfterPhotos[index];
+              {currentBeforePhotos.map((beforePhoto, idx) => {
+                const afterPhoto = currentAfterPhotos[idx];
                 return (
                   <div key={beforePhoto.id} className="flex gap-2">
-                    <div className="flex-1 relative aspect-square rounded-lg overflow-hidden border border-gray-200">
+                    <div className="flex-1 relative aspect-square rounded-lg overflow-hidden border border-gray-200 cursor-pointer active:opacity-80"
+                      onClick={() => openLightbox(currentBeforePhotos, idx, 'Before')}>
                       <img src={beforePhoto.dataUrl} alt="Before" className="w-full h-full object-cover" />
                       <div className="absolute top-1 left-1 bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded">Before</div>
                     </div>
                     <div className="flex-1 relative aspect-square rounded-lg overflow-hidden border border-gray-200">
                       {afterPhoto ? (
-                        <>
+                        <div className="w-full h-full cursor-pointer active:opacity-80"
+                          onClick={() => openLightbox(currentAfterPhotos, idx, 'After')}>
                           <img src={afterPhoto.dataUrl} alt="After" className="w-full h-full object-cover" />
                           <div className="absolute top-1 left-1 bg-green-500/80 text-white text-[10px] px-1.5 py-0.5 rounded">After</div>
-                        </>
+                        </div>
                       ) : (
                         <div className="w-full h-full bg-gray-100 flex items-center justify-center">
                           <span className="text-xs text-gray-400">사진 없음</span>
@@ -194,8 +180,9 @@ export default function ClientReview() {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2">
-              {(viewMode === 'before' ? currentBeforePhotos : currentAfterPhotos).map((photo) => (
-                <div key={photo.id} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200">
+              {(viewMode === 'before' ? currentBeforePhotos : currentAfterPhotos).map((photo, idx) => (
+                <div key={photo.id} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 cursor-pointer active:opacity-80"
+                  onClick={() => openLightbox(viewMode === 'before' ? currentBeforePhotos : currentAfterPhotos, idx, viewMode === 'before' ? 'Before' : 'After')}>
                   <img src={photo.dataUrl} alt={viewMode} className="w-full h-full object-cover" />
                   <div className={`absolute top-1 left-1 text-white text-[10px] px-1.5 py-0.5 rounded ${viewMode === 'before' ? 'bg-black/50' : 'bg-green-500/80'}`}>
                     {viewMode === 'before' ? 'Before' : 'After'}
@@ -210,7 +197,6 @@ export default function ClientReview() {
         </div>
       </section>
 
-      {/* Settlement Info */}
       <section className="bg-white mt-2 p-4">
         <h2 className="text-sm font-semibold text-gray-900 mb-3">결제 정보</h2>
         <div className="space-y-3 bg-gray-50 rounded-xl p-4">
@@ -230,15 +216,15 @@ export default function ClientReview() {
         <p className="text-xs text-gray-400 mt-2 text-center">확인을 누르시면 정산이 진행됩니다</p>
       </section>
 
-      {/* Confirm Button */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 max-w-[480px] mx-auto z-50">
-        <button
-          onClick={handleConfirm}
-          className="w-full py-4 bg-green-500 text-white font-bold rounded-xl text-base active:bg-green-600 transition-colors"
-        >
+        <button onClick={handleConfirm} className="w-full py-4 bg-green-500 text-white font-bold rounded-xl text-base active:bg-green-600 transition-colors">
           청소 결과 확인 완료
         </button>
       </div>
+
+      {lightbox && (
+        <PhotoLightbox photos={lightbox.photos} initialIndex={lightbox.index} onClose={() => setLightbox(null)} />
+      )}
     </div>
   );
 }

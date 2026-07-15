@@ -4,13 +4,7 @@ export type RequestStatus = 'pending' | 'matching' | 'matched' | 'in_progress' |
 
 export type CleaningZone = 'sink' | 'bathroom' | 'living' | 'kitchen' | 'bedroom' | 'other';
 
-export type CleaningCategory =
-  | 'home'
-  | 'office'
-  | 'store'
-  | 'move'
-  | 'appliance'
-  | 'other';
+export type CleaningCategory = 'home' | 'office' | 'store' | 'move' | 'appliance' | 'other';
 
 export const CATEGORY_LABELS: Record<CleaningCategory, string> = {
   home: '집 청소',
@@ -56,6 +50,7 @@ export interface CleaningRequest {
   cleanerPhoto?: string;
   checklist?: ChecklistItem[];
   afterPhotos?: Photo[];
+  completedAt?: string;
   createdAt: string;
 }
 
@@ -95,7 +90,6 @@ export const DEFAULT_CHECKLIST: Omit<ChecklistItem, 'id'>[] = [
   { zone: 'other', task: '현관 및 복도 청소', completed: false },
 ];
 
-/** zone이 기존 CleaningZone이면 한글 라벨 반환, 아니면 사용자 입력 그대로 반환 */
 export function getZoneLabel(zone: string): string {
   return (ZONE_LABELS as Record<string, string>)[zone] ?? zone;
 }
