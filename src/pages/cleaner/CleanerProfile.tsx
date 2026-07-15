@@ -189,7 +189,7 @@ export default function CleanerProfile() {
           </div>
           {grade.feeDiscount > 0 && (
             <div className="mt-3 bg-green-50 rounded-lg p-2.5 text-center">
-              <span className="text-sm font-bold text-green-700">수수료 {grade.feeDiscount}% 할인 적용 중</span>
+              <span className="text-sm font-bold text-green-700">등급 혜택 적용 중</span>
             </div>
           )}
         </div>

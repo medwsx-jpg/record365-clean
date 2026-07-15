@@ -40,7 +40,7 @@ export const GRADES: GradeInfo[] = [
     priorityMatching: false,
     badgeVisible: true,
     exposurePriority: 2,
-    benefits: ['수수료 3% 할인', '실버 뱃지 표시', '의뢰자에게 등급 노출'],
+    benefits: ['실버 뱃지 표시', '의뢰자에게 등급 노출'],
   },
   {
     key: 'gold',
@@ -54,7 +54,7 @@ export const GRADES: GradeInfo[] = [
     priorityMatching: true,
     badgeVisible: true,
     exposurePriority: 3,
-    benefits: ['수수료 5% 할인', '우선 매칭 지원', '골드 뱃지 표시', '상위 노출'],
+    benefits: ['우선 매칭 지원', '골드 뱃지 표시', '상위 노출'],
   },
   {
     key: 'platinum',
@@ -68,7 +68,7 @@ export const GRADES: GradeInfo[] = [
     priorityMatching: true,
     badgeVisible: true,
     exposurePriority: 4,
-    benefits: ['수수료 10% 할인', '최우선 매칭', '플래티넘 뱃지 표시', '최상위 노출', '전담 고객 지원'],
+    benefits: ['최우선 매칭', '플래티넘 뱃지 표시', '최상위 노출', '전담 고객 지원'],
   },
 ];
 

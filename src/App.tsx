@@ -133,7 +133,7 @@ function CleanerMyPage() {
           </div>
         )}
         {grade.feeDiscount > 0 && (
-          <div className="mt-3 bg-green-50 rounded-lg p-2 text-center"><span className="text-xs font-bold text-green-700">수수료 {grade.feeDiscount}% 할인 적용 중</span></div>
+          <div className="mt-3 bg-green-50 rounded-lg p-2 text-center"><span className="text-xs font-bold text-green-700">등급 혜택 적용 중</span></div>
         )}
       </div>
       <div className="bg-white rounded-xl shadow-sm border divide-y">

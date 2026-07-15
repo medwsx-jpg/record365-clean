@@ -8,11 +8,8 @@ import CleanerSetup, { isSetupCompleted } from './CleanerSetup';
 
 type SortMode = 'newest' | 'price';
 
-const FEE_RATE = 0.15;
-
-function formatPayout(price: number): string {
-  const payout = price - Math.round(price * FEE_RATE);
-  return payout.toLocaleString('ko-KR');
+function formatPrice(price: number): string {
+  return price.toLocaleString('ko-KR');
 }
 
 function timeAgo(dateStr: string): string {
@@ -88,10 +85,7 @@ export default function CleanerHome() {
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>{cfg.label}</span>
                   </div>
                   <p className="text-sm text-gray-600 truncate">{req.address}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <p className="text-sm font-bold text-green-600">{formatPayout(req.price)}원</p>
-                    <span className="text-[11px] text-gray-400">(수수료 제외)</span>
-                  </div>
+                  <p className="text-sm font-bold text-green-600 mt-1">{formatPrice(req.price)}원</p>
                   {req.status === 'as_requested' && req.asComment && (
                     <div className="mt-2 bg-red-50 rounded-lg px-3 py-2">
                       <p className="text-xs text-red-600 line-clamp-2">{req.asComment}</p>
@@ -132,10 +126,7 @@ export default function CleanerHome() {
                 className="w-full bg-white rounded-xl border border-gray-200 p-4 text-left shadow-sm active:bg-gray-50 transition-colors">
                 <div className="flex items-start justify-between mb-2">
                   <span className="text-xs text-gray-400">{ago}</span>
-                  <div className="text-right">
-                    <span className="text-base font-bold text-gray-900">{formatPayout(req.price)}원</span>
-                    <p className="text-[10px] text-gray-400">수수료 제외</p>
-                  </div>
+                  <span className="text-base font-bold text-gray-900">{formatPrice(req.price)}원</span>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
                   <span>{CATEGORY_LABELS[req.category]}</span>

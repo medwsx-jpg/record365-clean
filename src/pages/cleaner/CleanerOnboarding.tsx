@@ -47,7 +47,7 @@ const SLIDES = [
       </svg>
     ),
     title: '등급이 올라갈수록\n더 많은 혜택을 받아요',
-    description: '수수료 할인, 우선 매칭, 상위 노출 등\n등급별 다양한 혜택이 제공됩니다.',
+    description: '우선 매칭, 상위 노출, 전담 지원 등\n등급별 다양한 혜택이 제공됩니다.',
   },
   {
     illustration: (

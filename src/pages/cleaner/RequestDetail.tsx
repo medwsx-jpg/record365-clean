@@ -5,8 +5,6 @@ import { CATEGORY_LABELS, getZoneLabel } from '../../types';
 import { api, MOCK_CLEANERS } from '../../store';
 import PhotoLightbox from '../../components/PhotoLightbox';
 
-const FEE_RATE = 0.15;
-
 export default function RequestDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -35,10 +33,7 @@ export default function RequestDetail() {
   const beforePhotos = request.photos.filter((p) => p.type === 'before');
   const zones = [...new Set(beforePhotos.map((p) => p.zone))];
   const zonePhotos = beforePhotos.filter((p) => p.zone === activeZone);
-
   const price = request.price;
-  const fee = Math.round(price * FEE_RATE);
-  const payout = price - fee;
 
   const openLightbox = (clickedIndex: number) => {
     setLightbox({
@@ -75,14 +70,11 @@ export default function RequestDetail() {
         <h1 className="text-lg font-bold text-gray-900">의뢰 상세</h1>
       </header>
 
-      {/* 카테고리 & 수령액 요약 */}
+      {/* 카테고리 & 가격 요약 */}
       <section className="bg-white mt-2 p-4">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-medium text-gray-700">{CATEGORY_LABELS[request.category]}</span>
-          <div className="text-right">
-            <span className="text-lg font-bold text-green-600">{payout.toLocaleString('ko-KR')}원</span>
-            <p className="text-[10px] text-gray-400">수수료 제외 수령액</p>
-          </div>
+          <span className="text-lg font-bold text-green-600">{price.toLocaleString('ko-KR')}원</span>
         </div>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
@@ -99,25 +91,6 @@ export default function RequestDetail() {
               <p className="text-gray-700 bg-gray-50 rounded-lg p-3 text-xs">{request.notes}</p>
             </div>
           )}
-        </div>
-      </section>
-
-      {/* 예상 정산 정보 */}
-      <section className="bg-white mt-2 p-4">
-        <h2 className="text-sm font-semibold text-gray-900 mb-2">예상 정산 정보</h2>
-        <div className="bg-green-50 rounded-xl p-4 space-y-2">
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-gray-600">의뢰 금액</span>
-            <span className="font-medium text-gray-900">{price.toLocaleString('ko-KR')}원</span>
-          </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-gray-600">수수료 (15%)</span>
-            <span className="font-medium text-red-500">-{fee.toLocaleString('ko-KR')}원</span>
-          </div>
-          <div className="border-t border-green-200 pt-2 flex justify-between items-center">
-            <span className="text-sm font-semibold text-gray-900">예상 수령액</span>
-            <span className="text-lg font-bold text-green-600">{payout.toLocaleString('ko-KR')}원</span>
-          </div>
         </div>
       </section>
 

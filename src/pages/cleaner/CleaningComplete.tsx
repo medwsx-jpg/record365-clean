@@ -41,8 +41,6 @@ export default function CleaningComplete() {
   const currentAfterPhotos = afterPhotos.filter((p) => p.zone === activeZone);
 
   const price = request.price;
-  const fee = Math.round(price * 0.15);
-  const payout = price - fee;
 
   const openLightbox = (photoList: typeof beforePhotos, clickedIndex: number, labelPrefix: string) => {
     setLightbox({
@@ -148,18 +146,10 @@ export default function CleaningComplete() {
 
       <section className="bg-white mt-2 p-4">
         <h2 className="text-sm font-semibold text-gray-900 mb-3">정산 정보</h2>
-        <div className="space-y-3 bg-gray-50 rounded-xl p-4">
+        <div className="bg-gray-50 rounded-xl p-4">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">의뢰 금액</span>
-            <span className="text-sm font-medium text-gray-900">{price.toLocaleString('ko-KR')}원</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">수수료 (15%)</span>
-            <span className="text-sm font-medium text-red-500">-{fee.toLocaleString('ko-KR')}원</span>
-          </div>
-          <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
-            <span className="text-sm font-semibold text-gray-900">정산 예정 금액</span>
-            <span className="text-lg font-bold text-green-600">{payout.toLocaleString('ko-KR')}원</span>
+            <span className="text-sm font-semibold text-gray-900">의뢰 금액</span>
+            <span className="text-lg font-bold text-green-600">{price.toLocaleString('ko-KR')}원</span>
           </div>
         </div>
         <p className="text-xs text-gray-400 mt-2 text-center">의뢰자 확인 후 정산이 진행됩니다</p>
