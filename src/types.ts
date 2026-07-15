@@ -142,3 +142,16 @@ export interface ChatMessage {
   createdAt: string;
   read: boolean;
 }
+
+// --- 알림 관련 ---
+export type NotificationType = 'matched' | 'in_progress' | 'waiting_confirm' | 'completed' | 'as_requested' | 'review' | 'chat' | 'system';
+
+export interface AppNotification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  requestId?: string;
+  read: boolean;
+  createdAt: string;
+}

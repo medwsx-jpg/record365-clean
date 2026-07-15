@@ -1,16 +1,12 @@
-import type { UserRole, CleaningRequest, Cleaner, Review, ChatMessage } from './types';
+import type { UserRole, CleaningRequest, Cleaner, Review, ChatMessage, AppNotification } from './types';
 
 const STORAGE_KEYS = {
   ROLE: 'cleanmatch_role',
   REQUESTS: 'cleanmatch_requests',
   REVIEWS: 'cleanmatch_reviews',
   MESSAGES: 'cleanmatch_messages',
-  // 채팅
-  getMessages,
-  getAllMessages,
-  sendMessage,
-  markMessagesRead,
-  getUnreadCount,
+  NOTIFICATIONS: 'cleanmatch_notifications',
+  CLIENT_PROFILE: 'cleanmatch_client_profile',
 } as const;
 
 export const MOCK_CLEANERS: Cleaner[] = [
@@ -168,6 +164,73 @@ function getUnreadCount(requestId: string, readerRole: UserRole): number {
   return msgs.filter((m) => m.senderRole !== readerRole && !m.read).length;
 }
 
+
+// --- 알림 관련 ---
+function getNotifications(): AppNotification[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS);
+    if (!raw) return [];
+    return JSON.parse(raw) as AppNotification[];
+  } catch {
+    return [];
+  }
+}
+
+function addNotification(n: Omit<AppNotification, 'id' | 'createdAt' | 'read'>): AppNotification {
+  const all = getNotifications();
+  const newN: AppNotification = {
+    ...n,
+    id: generateId(),
+    createdAt: new Date().toISOString(),
+    read: false,
+  };
+  all.unshift(newN); // 최신이 위로
+  localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(all));
+  return newN;
+}
+
+function markNotificationRead(id: string): void {
+  const all = getNotifications();
+  const n = all.find((x) => x.id === id);
+  if (n && !n.read) {
+    n.read = true;
+    localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(all));
+  }
+}
+
+function markAllNotificationsRead(): void {
+  const all = getNotifications();
+  let changed = false;
+  all.forEach((n) => { if (!n.read) { n.read = true; changed = true; } });
+  if (changed) localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(all));
+}
+
+function getUnreadNotificationCount(): number {
+  return getNotifications().filter((n) => !n.read).length;
+}
+
+// --- 의뢰인 프로필 관련 ---
+interface ClientProfile {
+  name: string;
+  phone: string;
+  address: string;
+  photo: string;
+}
+
+function getClientProfile(): ClientProfile | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.CLIENT_PROFILE);
+    if (!raw) return null;
+    return JSON.parse(raw) as ClientProfile;
+  } catch {
+    return null;
+  }
+}
+
+function saveClientProfile(profile: ClientProfile): void {
+  localStorage.setItem(STORAGE_KEYS.CLIENT_PROFILE, JSON.stringify(profile));
+}
+
 export const api = {
   getRole,
   setRole,
@@ -191,6 +254,15 @@ export const api = {
   sendMessage,
   markMessagesRead,
   getUnreadCount,
+  // 알림
+  getNotifications,
+  addNotification,
+  markNotificationRead,
+  markAllNotificationsRead,
+  getUnreadNotificationCount,
+  // 의뢰인 프로필
+  getClientProfile,
+  saveClientProfile,
 } as const;
 
 export default api;

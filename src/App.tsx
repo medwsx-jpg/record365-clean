@@ -24,6 +24,8 @@ import CleanerTraining from './pages/cleaner/CleanerTraining';
 import CleanerGuide from './pages/cleaner/CleanerGuide';
 import ChatList from './pages/chat/ChatList';
 import ChatRoom from './pages/chat/ChatRoom';
+import NotificationCenter from './pages/NotificationCenter';
+import ClientProfileEdit from './pages/client/ClientProfile';
 
 function RoleGuard({ children, role }: { children: React.ReactNode; role: 'client' | 'cleaner' }) {
   const currentRole = api.getRole();
@@ -44,21 +46,39 @@ function ClientMyPage() {
     localStorage.removeItem('cleanmatch_reviews');
     window.location.href = '/clean';
   };
+  const profile = api.getClientProfile();
+  const displayName = profile?.name || '의뢰자';
+  const displayInitial = displayName.charAt(0);
+
   return (
     <>
       <div className="bg-white rounded-xl p-4 shadow-sm border">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold text-lg">의</div>
-          <div><p className="font-bold text-gray-800">의뢰자</p><p className="text-sm text-gray-500">Record 365 회원</p></div>
+          {profile?.photo ? (
+            <img src={profile.photo} alt="프로필" className="w-12 h-12 rounded-full object-cover border-2 border-green-400 shrink-0" />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold text-lg">{displayInitial}</div>
+          )}
+          <div>
+            <p className="font-bold text-gray-800">{displayName}</p>
+            <p className="text-sm text-gray-500">Record 365 회원</p>
+          </div>
         </div>
       </div>
       <div className="bg-white rounded-xl shadow-sm border divide-y">
+        <a href="/clean/client/profile" className="flex items-center justify-between px-4 py-3.5 text-gray-700 text-sm">
+          <div className="flex items-center gap-3"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg><span>프로필 수정</span></div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><polyline points="9 18 15 12 9 6" /></svg>
+        </a>
+        <a href="/clean/notifications" className="flex items-center justify-between px-4 py-3.5 text-gray-700 text-sm">
+          <div className="flex items-center gap-3"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg><span>알림</span></div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><polyline points="9 18 15 12 9 6" /></svg>
+        </a>
         <a href="/" className="block w-full text-left px-4 py-3.5 text-gray-700 text-sm">서비스 선택으로 돌아가기</a>
         <a href="/clean/faq" className="flex items-center justify-between px-4 py-3.5 text-gray-700 text-sm">
           <span>자주 묻는 질문</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><polyline points="9 18 15 12 9 6" /></svg>
         </a>
-        <button className="w-full text-left px-4 py-3.5 text-gray-700 text-sm">알림 설정</button>
         <button className="w-full text-left px-4 py-3.5 text-gray-700 text-sm">이용 약관</button>
         <button className="w-full text-left px-4 py-3.5 text-gray-700 text-sm">고객센터</button>
       </div>
@@ -143,6 +163,10 @@ function CleanerMyPage() {
           <div className="flex items-center gap-3"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg><span>프로필 수정</span></div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><polyline points="9 18 15 12 9 6" /></svg>
         </a>
+        <a href="/clean/notifications" className="flex items-center justify-between px-4 py-3.5 text-gray-700 text-sm">
+          <div className="flex items-center gap-3"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg><span>알림</span></div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><polyline points="9 18 15 12 9 6" /></svg>
+        </a>
         <a href="/clean/cleaner/training" className="flex items-center justify-between px-4 py-3.5 text-gray-700 text-sm">
           <div className="flex items-center gap-3"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" /></svg><span>교육 영상</span></div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><polyline points="9 18 15 12 9 6" /></svg>
@@ -158,7 +182,6 @@ function CleanerMyPage() {
       </div>
       <div className="bg-white rounded-xl shadow-sm border divide-y">
         <a href="/" className="block w-full text-left px-4 py-3.5 text-gray-700 text-sm">서비스 선택으로 돌아가기</a>
-        <button className="w-full text-left px-4 py-3.5 text-gray-700 text-sm">알림 설정</button>
         <button className="w-full text-left px-4 py-3.5 text-gray-700 text-sm">이용 약관</button>
         <button className="w-full text-left px-4 py-3.5 text-gray-700 text-sm">고객센터</button>
       </div>
@@ -238,6 +261,7 @@ export default function App() {
         <Route path="/clean/client/review/:id" element={<RoleGuard role="client"><ClientReview /></RoleGuard>} />
         <Route path="/clean/client/review/:id/write" element={<RoleGuard role="client"><WriteReview /></RoleGuard>} />
         <Route path="/clean/client/cleaner/:cleanerId" element={<RoleGuard role="client"><CleanerProfileView /></RoleGuard>} />
+        <Route path="/clean/client/profile" element={<RoleGuard role="client"><ClientProfileEdit /></RoleGuard>} />
         <Route path="/clean/faq" element={<ClientFAQ />} />
         <Route path="/clean/cleaner" element={<RoleGuard role="cleaner"><CleanerHome /></RoleGuard>} />
         <Route path="/clean/cleaner/request/:id" element={<RoleGuard role="cleaner"><RequestDetail /></RoleGuard>} />
@@ -248,8 +272,8 @@ export default function App() {
         <Route path="/clean/cleaner/training" element={<RoleGuard role="cleaner"><CleanerTraining /></RoleGuard>} />
         <Route path="/clean/cleaner/guide" element={<RoleGuard role="cleaner"><CleanerGuide /></RoleGuard>} />
         <Route path="/clean/chat" element={<ChatList />} />
-        <Route path="/clean/chat" element={<ChatList />} />
         <Route path="/clean/chat/:id" element={<ChatRoom />} />
+        <Route path="/clean/notifications" element={<NotificationCenter />} />
         <Route path="/clean/mypage" element={<MyPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
