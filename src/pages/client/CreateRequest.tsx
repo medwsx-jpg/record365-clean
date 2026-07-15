@@ -86,6 +86,79 @@ function CategorySelector({
 }
 
 // ---------------------------------------------------------------------------
+// 기타 서브옵션 선택
+// ---------------------------------------------------------------------------
+
+const OTHER_SUB_OPTIONS = [
+  { key: 'dishes', label: '설거지', icon: '🍽️' },
+  { key: 'fridge', label: '냉장고 청소', icon: '🧊' },
+  { key: 'laundry', label: '빨래/다림질', icon: '👕' },
+  { key: 'window', label: '창문/유리', icon: '🪟' },
+  { key: 'bathroom_deep', label: '욕실 특수청소', icon: '🚿' },
+  { key: 'organize', label: '정리정돈', icon: '📦' },
+  { key: 'other_custom', label: '기타 (직접입력)', icon: '✏️' },
+];
+
+function OtherSubSelector({
+  selected,
+  onSelect,
+  customText,
+  onCustomTextChange,
+}: {
+  selected: string[];
+  onSelect: (items: string[]) => void;
+  customText: string;
+  onCustomTextChange: (text: string) => void;
+}) {
+  const toggleItem = (key: string) => {
+    if (selected.includes(key)) {
+      onSelect(selected.filter((k) => k !== key));
+    } else {
+      onSelect([...selected, key]);
+    }
+  };
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        세부 항목 선택 <span className="text-xs text-gray-400 font-normal">(복수 선택 가능)</span>
+      </label>
+      <div className="grid grid-cols-2 gap-2">
+        {OTHER_SUB_OPTIONS.map((opt) => (
+          <button
+            key={opt.key}
+            type="button"
+            onClick={() => toggleItem(opt.key)}
+            className={`flex items-center gap-2 py-2.5 px-3 rounded-xl border-2 transition-all text-sm text-left ${
+              selected.includes(opt.key)
+                ? 'border-green-500 bg-green-50 text-green-700 font-medium'
+                : 'border-gray-200 bg-white text-gray-600 hover:border-green-300'
+            }`}
+          >
+            <span className="text-lg shrink-0">{opt.icon}</span>
+            <span className="truncate">{opt.label}</span>
+            {selected.includes(opt.key) && (
+              <svg className="w-4 h-4 ml-auto text-green-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
+          </button>
+        ))}
+      </div>
+      {selected.includes('other_custom') && (
+        <input
+          type="text"
+          value={customText}
+          onChange={(e) => onCustomTextChange(e.target.value)}
+          placeholder="청소 내용을 입력하세요"
+          className="w-full mt-2 border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+        />
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Space composition selector (for home cleaning)
 // ---------------------------------------------------------------------------
 
@@ -130,6 +203,17 @@ const PRICE_PER_PYEONG: Record<string, number> = {
 const AREA_BASE: Record<string, number> = {
   office: 50000,
   store: 50000,
+};
+
+// 기타 서브옵션별 가격
+const OTHER_SUB_PRICES: Record<string, number> = {
+  dishes: 30000,
+  fridge: 50000,
+  laundry: 40000,
+  window: 40000,
+  bathroom_deep: 60000,
+  organize: 50000,
+  other_custom: 50000,
 };
 
 // 평수 입력 컴포넌트
@@ -242,12 +326,14 @@ function PriceGuide({
   category,
   spaceConfig,
   areaPyeong,
+  otherSubs,
   price,
   onPriceChange,
 }: {
   category: CleaningCategory;
   spaceConfig: SpaceConfig;
   areaPyeong: number;
+  otherSubs: string[];
   price: number;
   onPriceChange: (price: number) => void;
 }) {
@@ -265,8 +351,11 @@ function PriceGuide({
     if ((category === 'office' || category === 'store') && areaPyeong > 0) {
       return (AREA_BASE[category] || 50000) + areaPyeong * (PRICE_PER_PYEONG[category] || 5000);
     }
+    if (category === 'other' && otherSubs.length > 0) {
+      return otherSubs.reduce((sum, key) => sum + (OTHER_SUB_PRICES[key] || 50000), 0);
+    }
     return CATEGORY_BASE_PRICE[category];
-  }, [category, spaceConfig, areaPyeong]);
+  }, [category, spaceConfig, areaPyeong, otherSubs]);
 
   const diff = price - guidePrice;
   const diffLabel =
@@ -311,6 +400,11 @@ function PriceGuide({
         {(category === 'office' || category === 'store') && (
           <p className="text-[11px] text-green-500 mt-1">
             기본료 {(AREA_BASE[category] || 50000).toLocaleString()}원 + {areaPyeong}평 × {(PRICE_PER_PYEONG[category] || 5000).toLocaleString()}원
+          </p>
+        )}
+        {category === 'other' && otherSubs.length > 0 && (
+          <p className="text-[11px] text-green-500 mt-1">
+            선택 항목 {otherSubs.length}개 기반 산출
           </p>
         )}
       </div>
@@ -503,9 +597,15 @@ export default function CreateRequest() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [area, setArea] = useState(20);
   const [priceInitialized, setPriceInitialized] = useState(false);
+  const [otherSubs, setOtherSubs] = useState<string[]>([]);
+  const [otherCustomText, setOtherCustomText] = useState('');
 
   const handleCategorySelect = (cat: CleaningCategory) => {
     setCategory(cat);
+    if (cat !== 'other') {
+      setOtherSubs([]);
+      setOtherCustomText('');
+    }
     if (!priceInitialized) {
       if (cat === 'home') {
         const guide =
@@ -523,6 +623,17 @@ export default function CreateRequest() {
         setPrice(CATEGORY_BASE_PRICE[cat]);
       }
       setPriceInitialized(true);
+    }
+  };
+
+  const handleOtherSubsChange = (subs: string[]) => {
+    setOtherSubs(subs);
+    // 서브옵션 변경 시 가격 자동 업데이트
+    if (subs.length > 0) {
+      const total = subs.reduce((sum, key) => sum + (OTHER_SUB_PRICES[key] || 50000), 0);
+      setPrice(total);
+    } else {
+      setPrice(CATEGORY_BASE_PRICE['other']);
     }
   };
 
@@ -552,6 +663,13 @@ export default function CreateRequest() {
     ? `방 ${spaceConfig.rooms} / 거실 ${spaceConfig.livingRooms} / 화장실 ${spaceConfig.bathrooms} / 주방 ${spaceConfig.kitchens} / 베란다 ${spaceConfig.verandas}`
     : '';
 
+  // 기타 서브옵션 라벨 생성
+  const otherSubsLabel = otherSubs.map((key) => {
+    if (key === 'other_custom') return otherCustomText || '기타';
+    const opt = OTHER_SUB_OPTIONS.find((o) => o.key === key);
+    return opt ? opt.label : key;
+  }).join(', ');
+
   const openAddressSearch = () => {
     const daum = (window as any).daum;
     if (!daum?.Postcode) return;
@@ -567,11 +685,14 @@ export default function CreateRequest() {
 
   const handleSubmit = () => {
     if (!category) return;
-    const notesWithInfo = category === 'home'
-      ? `[공간] ${spaceLabel}\n${notes}`.trim()
-      : (category === 'office' || category === 'store')
-      ? `[면적] ${area}평\n${notes}`.trim()
-      : notes;
+    let notesWithInfo = notes;
+    if (category === 'home') {
+      notesWithInfo = `[공간] ${spaceLabel}\n${notes}`.trim();
+    } else if (category === 'office' || category === 'store') {
+      notesWithInfo = `[면적] ${area}평\n${notes}`.trim();
+    } else if (category === 'other' && otherSubs.length > 0) {
+      notesWithInfo = `[기타 항목] ${otherSubsLabel}\n${notes}`.trim();
+    }
 
     const request: CleaningRequest = {
       id: api.generateId(),
@@ -614,6 +735,15 @@ export default function CreateRequest() {
 
             {(category === 'office' || category === 'store') && (
               <AreaInput value={area} onChange={handleAreaChange} category={category} />
+            )}
+
+            {category === 'other' && (
+              <OtherSubSelector
+                selected={otherSubs}
+                onSelect={handleOtherSubsChange}
+                customText={otherCustomText}
+                onCustomTextChange={setOtherCustomText}
+              />
             )}
 
             <div>
@@ -659,6 +789,7 @@ export default function CreateRequest() {
                 category={category}
                 spaceConfig={spaceConfig}
                 areaPyeong={area}
+                otherSubs={otherSubs}
                 price={price}
                 onPriceChange={setPrice}
               />
@@ -700,6 +831,12 @@ export default function CreateRequest() {
                   <>
                     <span className="text-gray-500">면적</span>
                     <span className="text-gray-800 font-medium">{area}평</span>
+                  </>
+                )}
+                {category === 'other' && otherSubs.length > 0 && (
+                  <>
+                    <span className="text-gray-500">세부 항목</span>
+                    <span className="text-gray-800 font-medium text-xs">{otherSubsLabel}</span>
                   </>
                 )}
                 <span className="text-gray-500">날짜</span>
