@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { CleaningRequest } from '../../types';
-import { getZoneLabel, CATEGORY_LABELS } from '../../types';
+import { getZoneLabel, CATEGORY_LABELS, AS_REASONS } from '../../types';
 import { api } from '../../store';
 import PhotoLightbox from '../../components/PhotoLightbox';
 
@@ -14,6 +14,9 @@ export default function ClientReview() {
   const [activeZone, setActiveZone] = useState<string>('');
   const [viewMode, setViewMode] = useState<ViewMode>('side');
   const [lightbox, setLightbox] = useState<{ photos: { id: string; dataUrl: string; label?: string }[]; index: number } | null>(null);
+  const [asModal, setAsModal] = useState(false);
+  const [asReason, setAsReason] = useState('');
+  const [asComment, setAsComment] = useState('');
 
   useEffect(() => {
     if (!id) return;
@@ -34,6 +37,7 @@ export default function ClientReview() {
   }
 
   const isCompleted = request.status === 'completed';
+  const isAsRequested = request.status === 'as_requested';
   const hasReview = !!request.reviewId;
   const existingReview = hasReview ? api.getReviewById(request.reviewId!) : null;
   const beforePhotos = request.photos.filter((p) => p.type === 'before');
@@ -41,9 +45,6 @@ export default function ClientReview() {
   const zones = [...new Set(beforePhotos.map((p) => p.zone))];
   const currentBeforePhotos = beforePhotos.filter((p) => p.zone === activeZone);
   const currentAfterPhotos = afterPhotos.filter((p) => p.zone === activeZone);
-  const price = request.price;
-  const fee = Math.round(price * 0.15);
-  const payout = price - fee;
 
   const openLightbox = (photoList: typeof beforePhotos, clickedIndex: number, labelPrefix: string) => {
     setLightbox({
@@ -54,8 +55,21 @@ export default function ClientReview() {
 
   const handleConfirm = () => {
     api.updateRequest(request.id, { status: 'completed' });
-    // 확인 완료 후 리뷰 작성 페이지로 이동
     navigate(`/clean/client/review/${request.id}/write`, { replace: true });
+  };
+
+  const handleAsRequest = () => {
+    if (!asReason && !asComment.trim()) return;
+    const commentText = asComment.trim()
+      ? `[${asReason}] ${asComment.trim()}`
+      : asReason;
+    api.updateRequest(request.id, {
+      status: 'as_requested',
+      asComment: commentText,
+      asRequestedAt: new Date().toISOString(),
+    });
+    setAsModal(false);
+    setRequest(api.getRequestById(request.id) || null);
   };
 
   const renderStars = (rating: number) => {
@@ -73,13 +87,17 @@ export default function ClientReview() {
     );
   };
 
+  const showBottomButtons = request.status === 'waiting_confirm';
+
   return (
-    <div className={`min-h-screen bg-gray-50 max-w-[480px] mx-auto ${isCompleted ? 'pb-8' : 'pb-24'}`}>
+    <div className={`min-h-screen bg-gray-50 max-w-[480px] mx-auto ${showBottomButtons ? 'pb-28' : 'pb-8'}`}>
       <header className="sticky top-0 z-40 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="text-gray-600">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
         </button>
-        <h1 className="text-lg font-bold text-gray-900">{isCompleted ? '청소 결과' : '청소 결과 확인'}</h1>
+        <h1 className="text-lg font-bold text-gray-900">
+          {isCompleted ? '청소 결과' : isAsRequested ? 'A/S 요청됨' : '청소 결과 확인'}
+        </h1>
       </header>
 
       {isCompleted ? (
@@ -88,6 +106,18 @@ export default function ClientReview() {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" className="shrink-0"><polyline points="20 6 9 17 4 12" /></svg>
             <p className="text-sm text-green-700">확인 완료된 의뢰입니다.</p>
           </div>
+        </div>
+      ) : isAsRequested ? (
+        <div className="bg-red-50 border-b border-red-100 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" className="shrink-0">
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <p className="text-sm text-red-700">A/S 재방문이 요청되었습니다.</p>
+          </div>
+          {request.asComment && (
+            <p className="text-xs text-red-600 mt-2 bg-red-100/50 rounded-lg p-2">{request.asComment}</p>
+          )}
         </div>
       ) : (
         <div className="bg-blue-50 border-b border-blue-100 px-4 py-3">
@@ -103,8 +133,12 @@ export default function ClientReview() {
       <section className="bg-white mt-2 p-4">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold text-gray-900">의뢰 정보</h2>
-          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isCompleted ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-            {isCompleted ? '완료' : '확인 대기'}
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+            isCompleted ? 'bg-green-100 text-green-700' :
+            isAsRequested ? 'bg-red-100 text-red-700' :
+            'bg-blue-100 text-blue-700'
+          }`}>
+            {isCompleted ? '완료' : isAsRequested ? 'A/S 요청' : '확인 대기'}
           </span>
         </div>
         <div className="grid grid-cols-2 gap-1.5 text-sm">
@@ -114,12 +148,20 @@ export default function ClientReview() {
           <span className="text-gray-800">{request.date} {request.time}</span>
           <span className="text-gray-500">청소자</span>
           <span className="text-gray-800 font-medium">{request.cleanerName || '-'}</span>
+          <span className="text-gray-500">결제 금액</span>
+          <span className="text-gray-800 font-bold">{request.price.toLocaleString('ko-KR')}원</span>
         </div>
       </section>
 
       <section className="bg-white mt-2 py-4">
         <h2 className="px-4 text-sm font-semibold text-gray-900 mb-1">Before / After 비교</h2>
-        <p className="px-4 text-xs text-gray-400 mb-3">사진을 터치하면 크게 볼 수 있습니다</p>
+        <p className="px-4 text-xs text-gray-400 mb-1">사진을 터치하면 크게 볼 수 있습니다</p>
+        <div className="px-4 flex items-center gap-1.5 mb-3">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" className="shrink-0">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          <span className="text-[11px] text-gray-400">촬영된 사진은 의뢰인과 담당 청소자만 열람할 수 있습니다</span>
+        </div>
 
         {zones.length > 0 && (
           <div className="overflow-x-auto scrollbar-hide px-4">
@@ -200,27 +242,6 @@ export default function ClientReview() {
         </div>
       </section>
 
-      <section className="bg-white mt-2 p-4">
-        <h2 className="text-sm font-semibold text-gray-900 mb-3">결제 정보</h2>
-        <div className="space-y-3 bg-gray-50 rounded-xl p-4">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">의뢰 금액</span>
-            <span className="text-sm font-medium text-gray-900">{price.toLocaleString('ko-KR')}원</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">수수료 (15%)</span>
-            <span className="text-sm font-medium text-gray-400">-{fee.toLocaleString('ko-KR')}원</span>
-          </div>
-          <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
-            <span className="text-sm font-semibold text-gray-900">청소자 정산 금액</span>
-            <span className="text-lg font-bold text-green-600">{payout.toLocaleString('ko-KR')}원</span>
-          </div>
-        </div>
-        <p className="text-xs text-gray-400 mt-2 text-center">
-          {isCompleted ? '정산이 완료되었습니다' : '확인을 누르시면 정산이 진행됩니다'}
-        </p>
-      </section>
-
       {/* 리뷰 표시 (완료 + 리뷰 작성된 경우) */}
       {isCompleted && existingReview && (
         <section className="bg-white mt-2 p-4">
@@ -248,11 +269,66 @@ export default function ClientReview() {
         </div>
       )}
 
-      {!isCompleted && (
+      {/* 하단 버튼: 확인 대기 상태에서만 */}
+      {showBottomButtons && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 max-w-[480px] mx-auto z-50">
-          <button onClick={handleConfirm} className="w-full py-4 bg-green-500 text-white font-bold rounded-xl text-base active:bg-green-600 transition-colors">
-            청소 결과 확인 완료
-          </button>
+          <div className="flex gap-3">
+            <button onClick={() => { setAsModal(true); setAsReason(''); setAsComment(''); }}
+              className="flex-1 py-4 bg-red-50 text-red-500 font-bold rounded-xl text-sm border border-red-200 active:bg-red-100 transition-colors">
+              불만족 / A/S 요청
+            </button>
+            <button onClick={handleConfirm}
+              className="flex-[2] py-4 bg-green-500 text-white font-bold rounded-xl text-base active:bg-green-600 transition-colors">
+              만족 / 확인 완료
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* A/S 요청 모달 */}
+      {asModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-xl max-h-[85vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-3">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round">
+                  <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-1 text-center">A/S 재방문 요청</h3>
+              <p className="text-xs text-gray-500 text-center mb-4">불만족 사유를 선택하고 상세 내용을 작성해주세요</p>
+
+              <div className="space-y-2 mb-4">
+                {AS_REASONS.map((reason) => (
+                  <button key={reason} onClick={() => setAsReason(reason)}
+                    className={`w-full text-left px-4 py-3 rounded-xl text-sm transition-colors ${
+                      asReason === reason ? 'bg-red-50 border-red-300 border text-red-700 font-medium' : 'bg-gray-50 border border-gray-200 text-gray-700'
+                    }`}>
+                    {reason}
+                  </button>
+                ))}
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1">상세 코멘트</label>
+                <textarea
+                  value={asComment}
+                  onChange={(e) => setAsComment(e.target.value)}
+                  placeholder="불만족 사항을 구체적으로 작성해주세요 (선택)"
+                  maxLength={300}
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-300 resize-none h-24"
+                />
+                <p className="text-xs text-gray-400 text-right mt-1">{asComment.length}/300</p>
+              </div>
+            </div>
+            <div className="flex border-t border-gray-200">
+              <button onClick={() => setAsModal(false)}
+                className="flex-1 py-3.5 text-sm font-medium text-gray-600 border-r border-gray-200">취소</button>
+              <button onClick={handleAsRequest}
+                disabled={!asReason}
+                className={`flex-1 py-3.5 text-sm font-medium ${asReason ? 'text-red-500' : 'text-gray-300'}`}>A/S 요청하기</button>
+            </div>
+          </div>
         </div>
       )}
 

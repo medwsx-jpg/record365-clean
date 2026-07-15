@@ -5,6 +5,8 @@ import { CATEGORY_LABELS, getZoneLabel } from '../../types';
 import { api, MOCK_CLEANERS } from '../../store';
 import PhotoLightbox from '../../components/PhotoLightbox';
 
+const FEE_RATE = 0.15;
+
 export default function RequestDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -35,7 +37,7 @@ export default function RequestDetail() {
   const zonePhotos = beforePhotos.filter((p) => p.zone === activeZone);
 
   const price = request.price;
-  const fee = Math.round(price * 0.15);
+  const fee = Math.round(price * FEE_RATE);
   const payout = price - fee;
 
   const openLightbox = (clickedIndex: number) => {
@@ -73,11 +75,14 @@ export default function RequestDetail() {
         <h1 className="text-lg font-bold text-gray-900">의뢰 상세</h1>
       </header>
 
-      {/* 카테고리 & 가격 요약 */}
+      {/* 카테고리 & 수령액 요약 */}
       <section className="bg-white mt-2 p-4">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-medium text-gray-700">{CATEGORY_LABELS[request.category]}</span>
-          <span className="text-lg font-bold text-green-600">{price.toLocaleString('ko-KR')}원</span>
+          <div className="text-right">
+            <span className="text-lg font-bold text-green-600">{payout.toLocaleString('ko-KR')}원</span>
+            <p className="text-[10px] text-gray-400">수수료 제외 수령액</p>
+          </div>
         </div>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
@@ -119,7 +124,13 @@ export default function RequestDetail() {
       {/* 청소 구역 사진 */}
       <section className="bg-white mt-2 py-4">
         <h2 className="px-4 text-sm font-semibold text-gray-900 mb-1">청소 구역 사진</h2>
-        <p className="px-4 text-xs text-gray-400 mb-3">사진을 터치하면 크게 볼 수 있습니다</p>
+        <p className="px-4 text-xs text-gray-400 mb-1">사진을 터치하면 크게 볼 수 있습니다</p>
+        <div className="px-4 flex items-center gap-1.5 mb-3">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" className="shrink-0">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          <span className="text-[11px] text-gray-400">촬영된 사진은 의뢰인과 담당 청소자만 열람할 수 있습니다</span>
+        </div>
         {zones.length > 0 ? (
           <>
             <div className="overflow-x-auto scrollbar-hide px-4">

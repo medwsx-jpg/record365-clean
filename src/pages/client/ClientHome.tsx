@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { CleaningRequest, RequestStatus } from '../../types';
-import { CATEGORY_LABELS, CANCEL_REASONS } from '../../types';
+import { CATEGORY_LABELS, CANCEL_REASONS, MATCHING_TIMEOUT_HOURS } from '../../types';
 import { api } from '../../store';
 import BottomNav from '../../components/BottomNav';
 
@@ -15,6 +15,7 @@ const STATUS_CONFIG: Record<RequestStatus, { label: string; bg: string; text: st
   waiting_confirm: { label: '확인 대기', bg: 'bg-orange-100', text: 'text-orange-700' },
   completed: { label: '완료', bg: 'bg-gray-100', text: 'text-gray-500' },
   cancelled: { label: '취소됨', bg: 'bg-red-50', text: 'text-red-500' },
+  as_requested: { label: 'A/S 요청', bg: 'bg-red-100', text: 'text-red-700' },
 };
 
 function StatusBadge({ status }: { status: RequestStatus }) {
@@ -42,6 +43,17 @@ function getRemainingTime(completedAt?: string): string | null {
   return `${minutes}분`;
 }
 
+function getMatchingRemaining(createdAt: string): { text: string; urgent: boolean } | null {
+  const deadline = new Date(createdAt).getTime() + MATCHING_TIMEOUT_HOURS * 60 * 60 * 1000;
+  const remaining = deadline - Date.now();
+  if (remaining <= 0) return { text: '매칭 대기 시간이 초과되었습니다', urgent: true };
+  const hours = Math.floor(remaining / (1000 * 60 * 60));
+  const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+  const urgent = hours < 6;
+  if (hours > 0) return { text: `매칭 대기 ${hours}시간 ${minutes}분 남음`, urgent };
+  return { text: `매칭 대기 ${minutes}분 남음`, urgent };
+}
+
 function renderStars(rating: number) {
   return (
     <div className="flex gap-0.5">
@@ -63,6 +75,8 @@ export default function ClientHome() {
   const [, setTick] = useState(0);
   const [cancelModal, setCancelModal] = useState<{ requestId: string; step: 'confirm' | 'reason' } | null>(null);
   const [cancelReason, setCancelReason] = useState('');
+  const [priceModal, setPriceModal] = useState<{ requestId: string; currentPrice: number } | null>(null);
+  const [newPrice, setNewPrice] = useState('');
 
   useEffect(() => {
     const loadAndAutoComplete = () => {
@@ -88,7 +102,7 @@ export default function ClientHome() {
   }, []);
 
   const active = requests.filter((r) =>
-    ['pending', 'matching', 'matched', 'in_progress', 'waiting_confirm'].includes(r.status),
+    ['pending', 'matching', 'matched', 'in_progress', 'waiting_confirm', 'as_requested'].includes(r.status),
   );
   const completed = requests.filter((r) => r.status === 'completed');
 
@@ -97,9 +111,7 @@ export default function ClientHome() {
       navigate(`/clean/client/matching/${req.id}`);
     } else if (req.status === 'matched') {
       navigate(`/clean/client/matched/${req.id}`);
-    } else if (req.status === 'waiting_confirm') {
-      navigate(`/clean/client/review/${req.id}`);
-    } else if (req.status === 'completed') {
+    } else if (req.status === 'waiting_confirm' || req.status === 'completed' || req.status === 'as_requested') {
       navigate(`/clean/client/review/${req.id}`);
     }
   };
@@ -116,13 +128,27 @@ export default function ClientHome() {
       setCancelModal({ ...cancelModal, step: 'reason' });
       return;
     }
-    // 취소 처리
     api.updateRequest(cancelModal.requestId, {
       status: 'cancelled',
       cancelReason: cancelReason || '취소 사유 없음',
       cancelledAt: new Date().toISOString(),
     });
     setCancelModal(null);
+    setRequests(api.getRequests());
+  };
+
+  const handlePriceAdjust = (e: React.MouseEvent, req: CleaningRequest) => {
+    e.stopPropagation();
+    setPriceModal({ requestId: req.id, currentPrice: req.price });
+    setNewPrice(req.price.toString());
+  };
+
+  const handlePriceConfirm = () => {
+    if (!priceModal) return;
+    const price = parseInt(newPrice, 10);
+    if (isNaN(price) || price < 10000) return;
+    api.updateRequest(priceModal.requestId, { price });
+    setPriceModal(null);
     setRequests(api.getRequests());
   };
 
@@ -154,6 +180,7 @@ export default function ClientHome() {
             <div className="space-y-3">
               {active.map((req) => {
                 const remaining = req.status === 'waiting_confirm' ? getRemainingTime(req.completedAt) : null;
+                const matchingInfo = req.status === 'pending' ? getMatchingRemaining(req.createdAt) : null;
                 return (
                   <button
                     key={req.id}
@@ -168,6 +195,30 @@ export default function ClientHome() {
                     </div>
                     <p className="text-sm text-gray-600 truncate">{req.address}</p>
                     <p className="text-sm font-semibold text-green-600 mt-1">{formatPrice(req.price)}</p>
+
+                    {/* 매칭 대기 정보 */}
+                    {req.status === 'pending' && matchingInfo && (
+                      <div className={`mt-2 rounded-lg px-3 py-2 ${matchingInfo.urgent ? 'bg-amber-50' : 'bg-gray-50'}`}>
+                        <div className="flex items-center gap-2">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke={matchingInfo.urgent ? '#d97706' : '#9ca3af'} strokeWidth="2" className="shrink-0">
+                            <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                          </svg>
+                          <span className={`text-xs font-medium ${matchingInfo.urgent ? 'text-amber-700' : 'text-gray-500'}`}>
+                            {matchingInfo.text}
+                          </span>
+                        </div>
+                        {matchingInfo.urgent && (
+                          <div className="mt-2 flex gap-2">
+                            <span onClick={(e) => handlePriceAdjust(e, req)}
+                              className="text-xs text-blue-600 underline cursor-pointer">가격 조정</span>
+                            <span onClick={(e) => handleCancelStart(e, req.id)}
+                              className="text-xs text-red-400 underline cursor-pointer">의뢰 취소</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {req.status === 'matched' && (
                       <div className="mt-2 bg-green-50 rounded-lg px-3 py-2 flex items-center gap-2">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" className="shrink-0">
@@ -194,6 +245,19 @@ export default function ClientHome() {
                         )}
                       </div>
                     )}
+                    {req.status === 'as_requested' && (
+                      <div className="mt-2 bg-red-50 rounded-lg px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" className="shrink-0">
+                            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                          </svg>
+                          <span className="text-xs text-red-700 font-medium">A/S 재방문이 요청되었습니다</span>
+                        </div>
+                        {req.asComment && (
+                          <p className="text-[11px] text-red-600 mt-1 pl-5 line-clamp-2">{req.asComment}</p>
+                        )}
+                      </div>
+                    )}
                     {req.status === 'in_progress' && (
                       <div className="mt-2 flex items-center gap-1.5">
                         <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
@@ -203,8 +267,8 @@ export default function ClientHome() {
                     {req.cleanerName && req.status !== 'matching' && (
                       <p className="text-xs text-gray-400 mt-1">청소자: {req.cleanerName}</p>
                     )}
-                    {/* 취소 버튼: pending 상태만 */}
-                    {req.status === 'pending' && (
+                    {/* 취소 버튼: pending 상태 (매칭 대기 급하지 않을 때) */}
+                    {req.status === 'pending' && (!matchingInfo || !matchingInfo.urgent) && (
                       <div className="mt-3 flex justify-end">
                         <span
                           onClick={(e) => handleCancelStart(e, req.id)}
@@ -306,6 +370,51 @@ export default function ClientHome() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* 가격 조정 모달 */}
+      {priceModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-xl">
+            <div className="p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">가격 조정</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                매칭이 어려울 경우 가격을 높이면 청소자 매칭 확률이 올라갑니다.
+              </p>
+              <div className="bg-gray-50 rounded-xl p-3 mb-4">
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-500">현재 가격</span>
+                  <span className="font-medium text-gray-700">{priceModal.currentPrice.toLocaleString('ko-KR')}원</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">지역 평균 시세</span>
+                  <span className="font-medium text-blue-600">{Math.round(priceModal.currentPrice * 1.15).toLocaleString('ko-KR')}원</span>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1">새 가격 (원)</label>
+                <input
+                  type="number"
+                  value={newPrice}
+                  onChange={(e) => setNewPrice(e.target.value)}
+                  min="10000"
+                  step="1000"
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
+                />
+                <p className="text-xs text-gray-400 mt-1">최소 10,000원 이상 입력해주세요</p>
+              </div>
+            </div>
+            <div className="flex border-t border-gray-200">
+              <button onClick={() => setPriceModal(null)}
+                className="flex-1 py-3.5 text-sm font-medium text-gray-600 border-r border-gray-200">취소</button>
+              <button onClick={handlePriceConfirm}
+                disabled={!newPrice || parseInt(newPrice, 10) < 10000}
+                className={`flex-1 py-3.5 text-sm font-medium ${newPrice && parseInt(newPrice, 10) >= 10000 ? 'text-green-600' : 'text-gray-300'}`}>
+                가격 변경
+              </button>
+            </div>
           </div>
         </div>
       )}

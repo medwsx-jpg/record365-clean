@@ -1,6 +1,6 @@
 export type UserRole = 'client' | 'cleaner';
 
-export type RequestStatus = 'pending' | 'matching' | 'matched' | 'in_progress' | 'waiting_confirm' | 'completed' | 'cancelled';
+export type RequestStatus = 'pending' | 'matching' | 'matched' | 'in_progress' | 'waiting_confirm' | 'completed' | 'cancelled' | 'as_requested';
 
 export type CleaningZone = 'sink' | 'bathroom' | 'living' | 'kitchen' | 'bedroom' | 'other';
 
@@ -65,6 +65,8 @@ export interface CleaningRequest {
   reviewId?: string;
   cancelReason?: string;
   cancelledAt?: string;
+  asComment?: string;
+  asRequestedAt?: string;
   createdAt: string;
 }
 
@@ -115,3 +117,14 @@ export const CANCEL_REASONS = [
   '개인 사정으로 취소합니다',
   '기타',
 ] as const;
+
+export const AS_REASONS = [
+  '청소 상태가 불만족스럽습니다',
+  '요청한 구역이 청소되지 않았습니다',
+  '약속된 시간보다 일찍 종료되었습니다',
+  '청소 도구/세제 문제가 있었습니다',
+  '기타',
+] as const;
+
+// 매칭 대기 시간 (시간 단위)
+export const MATCHING_TIMEOUT_HOURS = 24;

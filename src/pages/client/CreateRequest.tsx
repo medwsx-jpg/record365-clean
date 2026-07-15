@@ -572,6 +572,12 @@ export default function CreateRequest() {
               <p className="text-xs text-amber-600">• 각 구역마다 최소 1장의 사진이 필요합니다.</p>
               <p className="text-xs text-amber-600">• 청소자가 청소 후 같은 구역을 촬영하여 비교합니다.</p>
               <p className="text-xs text-amber-600">• 사진이 없으면 의뢰를 등록할 수 없습니다.</p>
+            <div className="flex items-center gap-1.5 px-1">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" className="shrink-0">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              <span className="text-[11px] text-gray-400">촬영된 사진은 의뢰인과 담당 청소자만 열람할 수 있습니다</span>
+            </div>
             </div>
             <FreePhotoUploader photos={photos} onPhotosChange={setPhotos} areas={photoAreas} onAreasChange={setPhotoAreas} />
             {(() => {

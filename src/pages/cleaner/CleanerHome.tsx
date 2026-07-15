@@ -8,8 +8,11 @@ import CleanerSetup, { isSetupCompleted } from './CleanerSetup';
 
 type SortMode = 'newest' | 'price';
 
-function formatPrice(price: number): string {
-  return price.toLocaleString('ko-KR');
+const FEE_RATE = 0.15;
+
+function formatPayout(price: number): string {
+  const payout = price - Math.round(price * FEE_RATE);
+  return payout.toLocaleString('ko-KR');
 }
 
 function timeAgo(dateStr: string): string {
@@ -27,6 +30,7 @@ const MY_STATUS_CONFIG: Record<string, { label: string; bg: string; text: string
   matched: { label: '매칭완료', bg: 'bg-green-100', text: 'text-green-700' },
   in_progress: { label: '청소 진행중', bg: 'bg-blue-100', text: 'text-blue-700' },
   waiting_confirm: { label: '확인 대기', bg: 'bg-orange-100', text: 'text-orange-700' },
+  as_requested: { label: 'A/S 요청', bg: 'bg-red-100', text: 'text-red-700' },
 };
 
 export default function CleanerHome() {
@@ -38,7 +42,7 @@ export default function CleanerHome() {
   const loadRequests = () => {
     const all = api.getRequests();
     setRequests(all.filter((r) => r.status === 'pending'));
-    setMyRequests(all.filter((r) => ['matched', 'in_progress', 'waiting_confirm'].includes(r.status)));
+    setMyRequests(all.filter((r) => ['matched', 'in_progress', 'waiting_confirm', 'as_requested'].includes(r.status)));
   };
 
   useEffect(() => {
@@ -60,6 +64,7 @@ export default function CleanerHome() {
     if (req.status === 'matched') navigate(`/clean/cleaner/prep/${req.id}`);
     else if (req.status === 'in_progress') navigate(`/clean/cleaner/progress/${req.id}`);
     else if (req.status === 'waiting_confirm') navigate(`/clean/cleaner/complete/${req.id}`);
+    else if (req.status === 'as_requested') navigate(`/clean/cleaner/complete/${req.id}`);
   };
 
   return (
@@ -83,7 +88,15 @@ export default function CleanerHome() {
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>{cfg.label}</span>
                   </div>
                   <p className="text-sm text-gray-600 truncate">{req.address}</p>
-                  <p className="text-sm font-bold text-green-600 mt-1">{formatPrice(req.price)}원</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-sm font-bold text-green-600">{formatPayout(req.price)}원</p>
+                    <span className="text-[11px] text-gray-400">(수수료 제외)</span>
+                  </div>
+                  {req.status === 'as_requested' && req.asComment && (
+                    <div className="mt-2 bg-red-50 rounded-lg px-3 py-2">
+                      <p className="text-xs text-red-600 line-clamp-2">{req.asComment}</p>
+                    </div>
+                  )}
                 </button>
               );
             })}
@@ -119,7 +132,10 @@ export default function CleanerHome() {
                 className="w-full bg-white rounded-xl border border-gray-200 p-4 text-left shadow-sm active:bg-gray-50 transition-colors">
                 <div className="flex items-start justify-between mb-2">
                   <span className="text-xs text-gray-400">{ago}</span>
-                  <span className="text-base font-bold text-gray-900">{formatPrice(req.price)}원</span>
+                  <div className="text-right">
+                    <span className="text-base font-bold text-gray-900">{formatPayout(req.price)}원</span>
+                    <p className="text-[10px] text-gray-400">수수료 제외</p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
                   <span>{CATEGORY_LABELS[req.category]}</span>
