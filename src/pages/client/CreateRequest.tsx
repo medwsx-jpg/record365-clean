@@ -52,7 +52,6 @@ function StepIndicator({ current }: { current: number }) {
 
 const ALL_CATEGORIES: CleaningCategory[] = ['home', 'office', 'store', 'move', 'appliance', 'other'];
 
-// 이미지가 있는 카테고리는 이미지 사용, 없으면 이모지 폴백
 const CATEGORY_IMAGE: Partial<Record<CleaningCategory, string>> = {
   home: '/icon-home.png',
   office: '/icon-office.png',
@@ -65,37 +64,22 @@ function CategoryIcon({ cat, size = 'normal' }: { cat: CleaningCategory; size?: 
   const imgSrc = CATEGORY_IMAGE[cat];
   const imgClass = size === 'small' ? 'w-5 h-5' : 'w-10 h-10';
   const emojiClass = size === 'small' ? 'text-base' : 'text-2xl';
-
   if (imgSrc) {
     return <img src={imgSrc} alt={CATEGORY_LABELS[cat]} className={`${imgClass} object-contain`} />;
   }
   return <span className={emojiClass}>{CATEGORY_ICONS[cat]}</span>;
 }
 
-function CategorySelector({
-  selected,
-  onSelect,
-}: {
-  selected: CleaningCategory | null;
-  onSelect: (cat: CleaningCategory) => void;
-}) {
+function CategorySelector({ selected, onSelect }: { selected: CleaningCategory | null; onSelect: (cat: CleaningCategory) => void }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        청소 종류 선택
-      </label>
+      <label className="block text-sm font-medium text-gray-700 mb-2">청소 종류 선택</label>
       <div className="grid grid-cols-3 gap-2">
         {ALL_CATEGORIES.map((cat) => (
-          <button
-            key={cat}
-            type="button"
-            onClick={() => onSelect(cat)}
+          <button key={cat} type="button" onClick={() => onSelect(cat)}
             className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 transition-all text-sm ${
-              selected === cat
-                ? 'border-green-500 bg-green-50 text-green-700 font-semibold'
-                : 'border-gray-200 bg-white text-gray-600 hover:border-green-300'
-            }`}
-          >
+              selected === cat ? 'border-green-500 bg-green-50 text-green-700 font-semibold' : 'border-gray-200 bg-white text-gray-600 hover:border-green-300'
+            }`}>
             <CategoryIcon cat={cat} />
             <span>{CATEGORY_LABELS[cat]}</span>
           </button>
@@ -119,25 +103,13 @@ const OTHER_SUB_OPTIONS = [
   { key: 'other_custom', label: '기타 (직접입력)', icon: '✏️' },
 ];
 
-function OtherSubSelector({
-  selected,
-  onSelect,
-  customText,
-  onCustomTextChange,
-}: {
-  selected: string[];
-  onSelect: (items: string[]) => void;
-  customText: string;
-  onCustomTextChange: (text: string) => void;
+function OtherSubSelector({ selected, onSelect, customText, onCustomTextChange }: {
+  selected: string[]; onSelect: (items: string[]) => void; customText: string; onCustomTextChange: (text: string) => void;
 }) {
   const toggleItem = (key: string) => {
-    if (selected.includes(key)) {
-      onSelect(selected.filter((k) => k !== key));
-    } else {
-      onSelect([...selected, key]);
-    }
+    if (selected.includes(key)) { onSelect(selected.filter((k) => k !== key)); }
+    else { onSelect([...selected, key]); }
   };
-
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -145,34 +117,21 @@ function OtherSubSelector({
       </label>
       <div className="grid grid-cols-2 gap-2">
         {OTHER_SUB_OPTIONS.map((opt) => (
-          <button
-            key={opt.key}
-            type="button"
-            onClick={() => toggleItem(opt.key)}
+          <button key={opt.key} type="button" onClick={() => toggleItem(opt.key)}
             className={`flex items-center gap-2 py-2.5 px-3 rounded-xl border-2 transition-all text-sm text-left ${
-              selected.includes(opt.key)
-                ? 'border-green-500 bg-green-50 text-green-700 font-medium'
-                : 'border-gray-200 bg-white text-gray-600 hover:border-green-300'
-            }`}
-          >
+              selected.includes(opt.key) ? 'border-green-500 bg-green-50 text-green-700 font-medium' : 'border-gray-200 bg-white text-gray-600 hover:border-green-300'
+            }`}>
             <span className="text-lg shrink-0">{opt.icon}</span>
             <span className="truncate">{opt.label}</span>
             {selected.includes(opt.key) && (
-              <svg className="w-4 h-4 ml-auto text-green-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
+              <svg className="w-4 h-4 ml-auto text-green-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
             )}
           </button>
         ))}
       </div>
       {selected.includes('other_custom') && (
-        <input
-          type="text"
-          value={customText}
-          onChange={(e) => onCustomTextChange(e.target.value)}
-          placeholder="청소 내용을 입력하세요"
-          className="w-full mt-2 border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-        />
+        <input type="text" value={customText} onChange={(e) => onCustomTextChange(e.target.value)} placeholder="청소 내용을 입력하세요"
+          className="w-full mt-2 border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" />
       )}
     </div>
   );
@@ -198,82 +157,33 @@ const SPACE_ITEMS: { key: keyof SpaceConfig; label: string; icon: string; max: n
   { key: 'verandas', label: '베란다', icon: '🌿', max: 3 },
 ];
 
-const PRICE_PER = {
-  rooms: 15000,
-  livingRooms: 20000,
-  bathrooms: 18000,
-  kitchens: 15000,
-  verandas: 10000,
-  base: 30000,
-};
+const PRICE_PER = { rooms: 15000, livingRooms: 20000, bathrooms: 18000, kitchens: 15000, verandas: 10000, base: 30000 };
 
 const CATEGORY_BASE_PRICE: Record<CleaningCategory, number> = {
-  home: 0,
-  office: 0,
-  store: 0,
-  move: 200000,
-  appliance: 50000,
-  other: 100000,
+  home: 0, office: 0, store: 0, move: 200000, appliance: 50000, other: 100000,
 };
 
-const PRICE_PER_PYEONG: Record<string, number> = {
-  office: 5000,
-  store: 5500,
-};
-const AREA_BASE: Record<string, number> = {
-  office: 50000,
-  store: 50000,
-};
+const PRICE_PER_PYEONG: Record<string, number> = { office: 5000, store: 5500 };
+const AREA_BASE: Record<string, number> = { office: 50000, store: 50000 };
 
-// 기타 서브옵션별 가격
 const OTHER_SUB_PRICES: Record<string, number> = {
-  dishes: 30000,
-  fridge: 50000,
-  laundry: 40000,
-  window: 40000,
-  bathroom_deep: 60000,
-  organize: 50000,
-  other_custom: 50000,
+  dishes: 30000, fridge: 50000, laundry: 40000, window: 40000, bathroom_deep: 60000, organize: 50000, other_custom: 50000,
 };
 
-// 평수 입력 컴포넌트
-function AreaInput({
-  value,
-  onChange,
-  category,
-}: {
-  value: number;
-  onChange: (v: number) => void;
-  category: string;
-}) {
+function AreaInput({ value, onChange, category }: { value: number; onChange: (v: number) => void; category: string }) {
   const label = category === 'office' ? '사무실 면적' : '매장 면적';
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
       <div className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3">
         <span className="text-lg">📐</span>
-        <input
-          type="number"
-          inputMode="numeric"
-          value={value || ''}
-          onChange={(e) => onChange(Math.max(0, parseInt(e.target.value) || 0))}
-          placeholder="평수 입력"
-          className="flex-1 text-sm focus:outline-none"
-        />
+        <input type="number" inputMode="numeric" value={value || ''} onChange={(e) => onChange(Math.max(0, parseInt(e.target.value) || 0))} placeholder="평수 입력" className="flex-1 text-sm focus:outline-none" />
         <span className="text-sm text-gray-400">평</span>
       </div>
       <div className="flex gap-2 mt-2">
         {[10, 20, 30, 50, 100].map((p) => (
-          <button
-            key={p}
-            type="button"
-            onClick={() => onChange(p)}
-            className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
-              value === p
-                ? 'border-green-500 bg-green-50 text-green-700 font-medium'
-                : 'border-gray-200 text-gray-500 active:bg-gray-100'
-            }`}
-          >
+          <button key={p} type="button" onClick={() => onChange(p)}
+            className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${value === p ? 'border-green-500 bg-green-50 text-green-700 font-medium' : 'border-gray-200 text-gray-500 active:bg-gray-100'}`}>
             {p}평
           </button>
         ))}
@@ -282,53 +192,31 @@ function AreaInput({
   );
 }
 
-function SpaceSelector({
-  config,
-  onChange,
-}: {
-  config: SpaceConfig;
-  onChange: (config: SpaceConfig) => void;
-}) {
+function SpaceSelector({ config, onChange }: { config: SpaceConfig; onChange: (config: SpaceConfig) => void }) {
   const adjust = (key: keyof SpaceConfig, delta: number) => {
     const item = SPACE_ITEMS.find((s) => s.key === key)!;
     const next = Math.max(0, Math.min(item.max, config[key] + delta));
     onChange({ ...config, [key]: next });
   };
-
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">공간 구성</label>
       <div className="space-y-2">
         {SPACE_ITEMS.map(({ key, label, icon }) => (
-          <div
-            key={key}
-            className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-4 py-3"
-          >
+          <div key={key} className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-4 py-3">
             <div className="flex items-center gap-2">
               <span className="text-lg">{icon}</span>
               <span className="text-sm font-medium text-gray-700">{label}</span>
             </div>
             <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => adjust(key, -1)}
-                disabled={config[key] === 0}
-                className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 disabled:text-gray-200 disabled:border-gray-200 active:bg-gray-100"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
+              <button type="button" onClick={() => adjust(key, -1)} disabled={config[key] === 0}
+                className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 disabled:text-gray-200 disabled:border-gray-200 active:bg-gray-100">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12" /></svg>
               </button>
               <span className="w-6 text-center text-sm font-bold text-gray-800">{config[key]}</span>
-              <button
-                type="button"
-                onClick={() => adjust(key, 1)}
-                className="w-8 h-8 rounded-full border border-green-400 flex items-center justify-center text-green-500 active:bg-green-50"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
+              <button type="button" onClick={() => adjust(key, 1)}
+                className="w-8 h-8 rounded-full border border-green-400 flex items-center justify-center text-green-500 active:bg-green-50">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
               </button>
             </div>
           </div>
@@ -342,31 +230,12 @@ function SpaceSelector({
 // Price guide
 // ---------------------------------------------------------------------------
 
-function PriceGuide({
-  category,
-  spaceConfig,
-  areaPyeong,
-  otherSubs,
-  price,
-  onPriceChange,
-}: {
-  category: CleaningCategory;
-  spaceConfig: SpaceConfig;
-  areaPyeong: number;
-  otherSubs: string[];
-  price: number;
-  onPriceChange: (price: number) => void;
+function PriceGuide({ category, spaceConfig, areaPyeong, otherSubs, price, onPriceChange }: {
+  category: CleaningCategory; spaceConfig: SpaceConfig; areaPyeong: number; otherSubs: string[]; price: number; onPriceChange: (price: number) => void;
 }) {
   const guidePrice = useMemo(() => {
     if (category === 'home') {
-      return (
-        PRICE_PER.base +
-        spaceConfig.rooms * PRICE_PER.rooms +
-        spaceConfig.livingRooms * PRICE_PER.livingRooms +
-        spaceConfig.bathrooms * PRICE_PER.bathrooms +
-        spaceConfig.kitchens * PRICE_PER.kitchens +
-        spaceConfig.verandas * PRICE_PER.verandas
-      );
+      return PRICE_PER.base + spaceConfig.rooms * PRICE_PER.rooms + spaceConfig.livingRooms * PRICE_PER.livingRooms + spaceConfig.bathrooms * PRICE_PER.bathrooms + spaceConfig.kitchens * PRICE_PER.kitchens + spaceConfig.verandas * PRICE_PER.verandas;
     }
     if ((category === 'office' || category === 'store') && areaPyeong > 0) {
       return (AREA_BASE[category] || 50000) + areaPyeong * (PRICE_PER_PYEONG[category] || 5000);
@@ -378,91 +247,38 @@ function PriceGuide({
   }, [category, spaceConfig, areaPyeong, otherSubs]);
 
   const diff = price - guidePrice;
-  const diffLabel =
-    diff > 0
-      ? `가이드보다 +${diff.toLocaleString('ko-KR')}원`
-      : diff < 0
-      ? `가이드보다 ${diff.toLocaleString('ko-KR')}원`
-      : '가이드 금액과 동일';
-
-  const adjust = (amount: number) => {
-    const next = Math.max(10000, price + amount);
-    onPriceChange(next);
-  };
-
+  const diffLabel = diff > 0 ? `가이드보다 +${diff.toLocaleString('ko-KR')}원` : diff < 0 ? `가이드보다 ${diff.toLocaleString('ko-KR')}원` : '가이드 금액과 동일';
+  const adjust = (amount: number) => { const next = Math.max(10000, price + amount); onPriceChange(next); };
   const useGuide = () => onPriceChange(guidePrice);
 
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">희망 가격</label>
-
       <div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-3">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs text-green-600 font-medium">예상 가이드 금액</p>
-            <p className="text-lg font-bold text-green-700">
-              {guidePrice.toLocaleString('ko-KR')}원
-            </p>
+            <p className="text-lg font-bold text-green-700">{guidePrice.toLocaleString('ko-KR')}원</p>
           </div>
-          <button
-            type="button"
-            onClick={useGuide}
-            className="px-3 py-1.5 bg-green-500 text-white text-xs font-medium rounded-lg active:bg-green-600"
-          >
-            이 금액으로
-          </button>
+          <button type="button" onClick={useGuide} className="px-3 py-1.5 bg-green-500 text-white text-xs font-medium rounded-lg active:bg-green-600">이 금액으로</button>
         </div>
-        {category === 'home' && (
-          <p className="text-[11px] text-green-500 mt-1">
-            기본료 {PRICE_PER.base.toLocaleString()}원 + 공간 구성 기반 산출
-          </p>
-        )}
-        {(category === 'office' || category === 'store') && (
-          <p className="text-[11px] text-green-500 mt-1">
-            기본료 {(AREA_BASE[category] || 50000).toLocaleString()}원 + {areaPyeong}평 × {(PRICE_PER_PYEONG[category] || 5000).toLocaleString()}원
-          </p>
-        )}
-        {category === 'other' && otherSubs.length > 0 && (
-          <p className="text-[11px] text-green-500 mt-1">
-            선택 항목 {otherSubs.length}개 기반 산출
-          </p>
-        )}
+        {category === 'home' && <p className="text-[11px] text-green-500 mt-1">기본료 {PRICE_PER.base.toLocaleString()}원 + 공간 구성 기반 산출</p>}
+        {(category === 'office' || category === 'store') && <p className="text-[11px] text-green-500 mt-1">기본료 {(AREA_BASE[category] || 50000).toLocaleString()}원 + {areaPyeong}평 × {(PRICE_PER_PYEONG[category] || 5000).toLocaleString()}원</p>}
+        {category === 'other' && otherSubs.length > 0 && <p className="text-[11px] text-green-500 mt-1">선택 항목 {otherSubs.length}개 기반 산출</p>}
       </div>
-
       <div className="bg-white border border-gray-200 rounded-xl p-4">
         <div className="flex items-center justify-center gap-4 mb-2">
-          <button
-            type="button"
-            onClick={() => adjust(-10000)}
-            className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-500 active:bg-gray-100 text-lg font-bold"
-          >
-            -
-          </button>
+          <button type="button" onClick={() => adjust(-10000)} className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-500 active:bg-gray-100 text-lg font-bold">-</button>
           <div className="text-center">
-            <p className="text-2xl font-bold text-gray-900">
-              {price.toLocaleString('ko-KR')}
-            </p>
+            <p className="text-2xl font-bold text-gray-900">{price.toLocaleString('ko-KR')}</p>
             <p className="text-xs text-gray-400">원</p>
           </div>
-          <button
-            type="button"
-            onClick={() => adjust(10000)}
-            className="w-10 h-10 rounded-full border-2 border-green-400 flex items-center justify-center text-green-500 active:bg-green-50 text-lg font-bold"
-          >
-            +
-          </button>
+          <button type="button" onClick={() => adjust(10000)} className="w-10 h-10 rounded-full border-2 border-green-400 flex items-center justify-center text-green-500 active:bg-green-50 text-lg font-bold">+</button>
         </div>
-        <p className={`text-center text-xs ${diff < 0 ? 'text-red-400' : diff > 0 ? 'text-blue-500' : 'text-gray-400'}`}>
-          {diffLabel}
-        </p>
+        <p className={`text-center text-xs ${diff < 0 ? 'text-red-400' : diff > 0 ? 'text-blue-500' : 'text-gray-400'}`}>{diffLabel}</p>
         <div className="flex justify-center gap-2 mt-2">
           {[-30000, -10000, 10000, 30000].map((amt) => (
-            <button
-              key={amt}
-              type="button"
-              onClick={() => adjust(amt)}
-              className="px-2.5 py-1 text-xs rounded-lg border border-gray-200 text-gray-500 active:bg-gray-100"
-            >
+            <button key={amt} type="button" onClick={() => adjust(amt)} className="px-2.5 py-1 text-xs rounded-lg border border-gray-200 text-gray-500 active:bg-gray-100">
               {amt > 0 ? '+' : ''}{(amt / 10000).toFixed(0)}만
             </button>
           ))}
@@ -476,16 +292,8 @@ function PriceGuide({
 // Free-form photo uploader
 // ---------------------------------------------------------------------------
 
-function FreePhotoUploader({
-  photos,
-  onPhotosChange,
-  areas,
-  onAreasChange,
-}: {
-  photos: Photo[];
-  onPhotosChange: (photos: Photo[]) => void;
-  areas: string[];
-  onAreasChange: (areas: string[]) => void;
+function FreePhotoUploader({ photos, onPhotosChange, areas, onAreasChange }: {
+  photos: Photo[]; onPhotosChange: (photos: Photo[]) => void; areas: string[]; onAreasChange: (areas: string[]) => void;
 }) {
   const [newArea, setNewArea] = useState('');
   const setAreas = onAreasChange;
@@ -527,30 +335,18 @@ function FreePhotoUploader({
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        <input
-          type="text"
-          value={newArea}
-          onChange={(e) => setNewArea(e.target.value)}
+        <input type="text" value={newArea} onChange={(e) => setNewArea(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addArea())}
-          placeholder="예: 화장실, 주방, 베란다..."
-          className="flex-1 border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-        />
-        <button
-          type="button"
-          onClick={addArea}
-          disabled={!newArea.trim()}
-          className="px-4 py-2.5 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
-        >
-          추가
-        </button>
+          placeholder="구역 추가 (예: 안방, 베란다...)"
+          className="flex-1 border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+        <button type="button" onClick={addArea} disabled={!newArea.trim()}
+          className="px-4 py-2.5 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap">추가</button>
       </div>
 
       {areas.length === 0 && (
         <div className="text-center py-8 text-gray-400">
           <svg className="mx-auto mb-2" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-            <circle cx="8.5" cy="8.5" r="1.5" />
-            <polyline points="21 15 16 10 5 21" />
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
           </svg>
           <p className="text-sm">청소할 구역을 추가하고</p>
           <p className="text-sm">현재 상태를 촬영해 주세요</p>
@@ -563,28 +359,17 @@ function FreePhotoUploader({
           <div key={area} className="bg-white rounded-xl p-3 border border-gray-200">
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-sm font-medium text-gray-700">{area}</h4>
-              <button type="button" onClick={() => removeArea(area)} className="text-xs text-red-400 hover:text-red-600">
-                구역 삭제
-              </button>
+              <button type="button" onClick={() => removeArea(area)} className="text-xs text-red-400 hover:text-red-600">구역 삭제</button>
             </div>
             <div className="flex gap-2 flex-wrap">
               {areaPhotos.map((photo) => (
                 <div key={photo.id} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
                   <img src={photo.dataUrl} alt="" className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => removePhoto(photo.id)}
-                    className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/50 text-white rounded-full flex items-center justify-center text-xs"
-                  >
-                    x
-                  </button>
+                  <button type="button" onClick={() => removePhoto(photo.id)} className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/50 text-white rounded-full flex items-center justify-center text-xs">x</button>
                 </div>
               ))}
               <label className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:border-green-400 hover:text-green-500 transition-colors">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
                 <span className="text-[10px] mt-0.5">촬영</span>
                 <input type="file" accept="image/*" className="hidden" onChange={handleFile(area)} />
               </label>
@@ -605,13 +390,7 @@ export default function CreateRequest() {
   const [step, setStep] = useState(0);
 
   const [category, setCategory] = useState<CleaningCategory | null>(null);
-  const [spaceConfig, setSpaceConfig] = useState<SpaceConfig>({
-    rooms: 2,
-    livingRooms: 1,
-    bathrooms: 1,
-    kitchens: 1,
-    verandas: 1,
-  });
+  const [spaceConfig, setSpaceConfig] = useState<SpaceConfig>({ rooms: 2, livingRooms: 1, bathrooms: 1, kitchens: 1, verandas: 1 });
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [address, setAddress] = useState('');
@@ -627,19 +406,10 @@ export default function CreateRequest() {
 
   const handleCategorySelect = (cat: CleaningCategory) => {
     setCategory(cat);
-    if (cat !== 'other') {
-      setOtherSubs([]);
-      setOtherCustomText('');
-    }
+    if (cat !== 'other') { setOtherSubs([]); setOtherCustomText(''); }
     if (!priceInitialized) {
       if (cat === 'home') {
-        const guide =
-          PRICE_PER.base +
-          spaceConfig.rooms * PRICE_PER.rooms +
-          spaceConfig.livingRooms * PRICE_PER.livingRooms +
-          spaceConfig.bathrooms * PRICE_PER.bathrooms +
-          spaceConfig.kitchens * PRICE_PER.kitchens +
-          spaceConfig.verandas * PRICE_PER.verandas;
+        const guide = PRICE_PER.base + spaceConfig.rooms * PRICE_PER.rooms + spaceConfig.livingRooms * PRICE_PER.livingRooms + spaceConfig.bathrooms * PRICE_PER.bathrooms + spaceConfig.kitchens * PRICE_PER.kitchens + spaceConfig.verandas * PRICE_PER.verandas;
         setPrice(guide);
       } else if (cat === 'office' || cat === 'store') {
         const guide = (AREA_BASE[cat] || 50000) + area * (PRICE_PER_PYEONG[cat] || 5000);
@@ -664,13 +434,7 @@ export default function CreateRequest() {
   const handleSpaceChange = (config: SpaceConfig) => {
     setSpaceConfig(config);
     if (category === 'home') {
-      const guide =
-        PRICE_PER.base +
-        config.rooms * PRICE_PER.rooms +
-        config.livingRooms * PRICE_PER.livingRooms +
-        config.bathrooms * PRICE_PER.bathrooms +
-        config.kitchens * PRICE_PER.kitchens +
-        config.verandas * PRICE_PER.verandas;
+      const guide = PRICE_PER.base + config.rooms * PRICE_PER.rooms + config.livingRooms * PRICE_PER.livingRooms + config.bathrooms * PRICE_PER.bathrooms + config.kitchens * PRICE_PER.kitchens + config.verandas * PRICE_PER.verandas;
       setPrice(guide);
     }
   };
@@ -696,15 +460,31 @@ export default function CreateRequest() {
   const openAddressSearch = () => {
     const daum = (window as any).daum;
     if (!daum?.Postcode) return;
-    new daum.Postcode({
-      oncomplete: (data: any) => {
-        setAddress(data.roadAddress || data.jibunAddress);
-      },
-    }).open();
+    new daum.Postcode({ oncomplete: (data: any) => { setAddress(data.roadAddress || data.jibunAddress); } }).open();
   };
 
   const fullAddress = addressDetail ? `${address} ${addressDetail}` : address;
   const step1Valid = category && date && time && address && price > 0;
+
+  // 기본 정보 기반 구역 자동 생성
+  const generateAutoAreas = () => {
+    if (photoAreas.length > 0) return; // 이미 구역이 있으면 스킵
+    const autoAreas: string[] = [];
+    if (category === 'home') {
+      for (let i = 0; i < spaceConfig.rooms; i++) autoAreas.push(spaceConfig.rooms > 1 ? `방 ${i + 1}` : '방');
+      for (let i = 0; i < spaceConfig.livingRooms; i++) autoAreas.push(spaceConfig.livingRooms > 1 ? `거실 ${i + 1}` : '거실');
+      for (let i = 0; i < spaceConfig.bathrooms; i++) autoAreas.push(spaceConfig.bathrooms > 1 ? `화장실 ${i + 1}` : '화장실');
+      for (let i = 0; i < spaceConfig.kitchens; i++) autoAreas.push(spaceConfig.kitchens > 1 ? `주방 ${i + 1}` : '주방');
+      for (let i = 0; i < spaceConfig.verandas; i++) autoAreas.push(spaceConfig.verandas > 1 ? `베란다 ${i + 1}` : '베란다');
+    } else if (category === 'office') {
+      autoAreas.push('사무실', '화장실', '복도');
+    } else if (category === 'store') {
+      autoAreas.push('매장', '화장실', '주방');
+    } else if (category === 'move') {
+      autoAreas.push('거실', '방', '화장실', '주방');
+    }
+    if (autoAreas.length > 0) setPhotoAreas(autoAreas);
+  };
 
   const handleSubmit = () => {
     if (!category) return;
@@ -738,9 +518,7 @@ export default function CreateRequest() {
     <div className="min-h-screen bg-gray-50 max-w-[480px] mx-auto">
       <header className="bg-white px-4 py-3 shadow-sm sticky top-0 z-40 flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-700">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
         </button>
         <h1 className="text-lg font-bold text-gray-800">새 청소 의뢰</h1>
       </header>
@@ -751,24 +529,11 @@ export default function CreateRequest() {
         {step === 0 && (
           <div className="space-y-4">
             <CategorySelector selected={category} onSelect={handleCategorySelect} />
-
-            {category === 'home' && (
-              <SpaceSelector config={spaceConfig} onChange={handleSpaceChange} />
-            )}
-
-            {(category === 'office' || category === 'store') && (
-              <AreaInput value={area} onChange={handleAreaChange} category={category} />
-            )}
-
+            {category === 'home' && <SpaceSelector config={spaceConfig} onChange={handleSpaceChange} />}
+            {(category === 'office' || category === 'store') && <AreaInput value={area} onChange={handleAreaChange} category={category} />}
             {category === 'other' && (
-              <OtherSubSelector
-                selected={otherSubs}
-                onSelect={handleOtherSubsChange}
-                customText={otherCustomText}
-                onCustomTextChange={setOtherCustomText}
-              />
+              <OtherSubSelector selected={otherSubs} onSelect={handleOtherSubsChange} customText={otherCustomText} onCustomTextChange={setOtherCustomText} />
             )}
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">날짜 선택</label>
               <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" />
@@ -780,56 +545,30 @@ export default function CreateRequest() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">주소 입력</label>
               <div className="flex gap-2 mb-2">
-                <input
-                  type="text"
-                  value={address}
-                  readOnly
-                  placeholder="주소를 검색하세요"
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-gray-50 cursor-pointer"
-                  onClick={openAddressSearch}
-                />
-                <button
-                  type="button"
-                  onClick={openAddressSearch}
-                  className="px-4 py-2.5 bg-green-500 text-white text-sm font-medium rounded-lg whitespace-nowrap active:bg-green-600"
-                >
-                  검색
-                </button>
+                <input type="text" value={address} readOnly placeholder="주소를 검색하세요" className="flex-1 border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-gray-50 cursor-pointer" onClick={openAddressSearch} />
+                <button type="button" onClick={openAddressSearch} className="px-4 py-2.5 bg-green-500 text-white text-sm font-medium rounded-lg whitespace-nowrap active:bg-green-600">검색</button>
               </div>
               {address && (
-                <input
-                  type="text"
-                  value={addressDetail}
-                  onChange={(e) => setAddressDetail(e.target.value)}
-                  placeholder="상세 주소 입력 (동/호수)"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
+                <input type="text" value={addressDetail} onChange={(e) => setAddressDetail(e.target.value)} placeholder="상세 주소 입력 (동/호수)"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" />
               )}
             </div>
-
             {category && (
-              <PriceGuide
-                category={category}
-                spaceConfig={spaceConfig}
-                areaPyeong={area}
-                otherSubs={otherSubs}
-                price={price}
-                onPriceChange={setPrice}
-              />
+              <PriceGuide category={category} spaceConfig={spaceConfig} areaPyeong={area} otherSubs={otherSubs} price={price} onPriceChange={setPrice} />
             )}
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">추가 요청사항</label>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="청소 시 참고할 사항을 적어주세요" rows={3} className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none" />
             </div>
-            <button onClick={() => setStep(1)} disabled={!step1Valid} className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white font-semibold py-3 rounded-xl transition-colors mt-2">다음</button>
+            <button onClick={() => { generateAutoAreas(); setStep(1); }} disabled={!step1Valid}
+              className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white font-semibold py-3 rounded-xl transition-colors mt-2">다음</button>
           </div>
         )}
 
         {step === 1 && (
           <div className="space-y-4">
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-1">
-              <p className="text-sm font-medium text-amber-800">청소할 구역을 추가하고 현재 상태를 촬영해 주세요.</p>
+              <p className="text-sm font-medium text-amber-800">각 구역의 현재 상태를 촬영해 주세요.</p>
               <p className="text-xs text-amber-600">• 각 구역마다 최소 1장의 사진이 필요합니다.</p>
               <p className="text-xs text-amber-600">• 청소자가 청소 후 같은 구역을 촬영하여 비교합니다.</p>
               <p className="text-xs text-amber-600">• 사진이 없으면 의뢰를 등록할 수 없습니다.</p>
