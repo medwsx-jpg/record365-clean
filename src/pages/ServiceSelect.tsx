@@ -19,13 +19,13 @@ export default function ServiceSelect() {
       </div>
 
       {/* Service Cards */}
-      <div className="w-full grid grid-cols-2 gap-3">
+      <div className="w-full grid grid-cols-2 gap-4">
         <button
           onClick={() => navigate('/clean')}
-          className="bg-gray-50 rounded-2xl p-5 active:bg-gray-100 transition-all text-center"
+          className="bg-gray-50 rounded-2xl p-6 active:bg-gray-100 transition-all text-center border border-gray-200 shadow-sm"
         >
-          <div className="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center overflow-hidden bg-orange-50">
-            <img src="/clean-icon.png" alt="슥싹 매칭" className="w-12 h-12 object-contain" />
+          <div className="w-20 h-20 rounded-2xl mx-auto mb-3 flex items-center justify-center overflow-hidden bg-orange-50">
+            <img src="/clean-icon.png" alt="슥싹 매칭" className="w-16 h-16 object-contain" />
           </div>
           <h2 className="text-sm font-semibold text-gray-900">슥싹 매칭</h2>
           <p className="text-xs text-gray-400 mt-1">청소 전문가 매칭</p>
@@ -33,10 +33,10 @@ export default function ServiceSelect() {
 
         <button
           onClick={() => navigate('/rental')}
-          className="bg-gray-50 rounded-2xl p-5 active:bg-gray-100 transition-all text-center"
+          className="bg-gray-50 rounded-2xl p-6 active:bg-gray-100 transition-all text-center border border-gray-200 shadow-sm"
         >
-          <div className="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center overflow-hidden bg-violet-50">
-            <img src="/rental-icon.png" alt="렌탈 분쟁 기록" className="w-12 h-12 object-contain" />
+          <div className="w-20 h-20 rounded-2xl mx-auto mb-3 flex items-center justify-center overflow-hidden bg-violet-50">
+            <img src="/rental-icon.png" alt="렌탈 분쟁 기록" className="w-16 h-16 object-contain" />
           </div>
           <h2 className="text-sm font-semibold text-gray-900">렌탈 분쟁 기록</h2>
           <p className="text-xs text-gray-400 mt-1">전후 상태를 사진 기록</p>
