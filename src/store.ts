@@ -1,78 +1,31 @@
 import type { UserRole, CleaningRequest, Cleaner } from './types';
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
 const STORAGE_KEYS = {
   ROLE: 'cleanmatch_role',
   REQUESTS: 'cleanmatch_requests',
 } as const;
 
-// ---------------------------------------------------------------------------
-// Mock data
-// ---------------------------------------------------------------------------
-
 export const MOCK_CLEANERS: Cleaner[] = [
-  {
-    id: 'cleaner-1',
-    name: '김미영',
-    rating: 4.9,
-    completedJobs: 127,
-    photo: 'https://api.dicebear.com/7.x/personas/svg?seed=miyo',
-    distance: 1.2,
-  },
-  {
-    id: 'cleaner-2',
-    name: '박정희',
-    rating: 4.7,
-    completedJobs: 84,
-    photo: 'https://api.dicebear.com/7.x/personas/svg?seed=jung',
-    distance: 2.5,
-  },
-  {
-    id: 'cleaner-3',
-    name: '이수진',
-    rating: 4.8,
-    completedJobs: 203,
-    photo: 'https://api.dicebear.com/7.x/personas/svg?seed=sujin',
-    distance: 0.8,
-  },
-  {
-    id: 'cleaner-4',
-    name: '최은지',
-    rating: 4.6,
-    completedJobs: 56,
-    photo: 'https://api.dicebear.com/7.x/personas/svg?seed=eunji',
-    distance: 3.1,
-  },
+  { id: 'cleaner-1', name: '김미영', rating: 4.9, completedJobs: 127, photo: 'https://api.dicebear.com/7.x/personas/svg?seed=miyo', distance: 1.2 },
+  { id: 'cleaner-2', name: '박정희', rating: 4.7, completedJobs: 84, photo: 'https://api.dicebear.com/7.x/personas/svg?seed=jung', distance: 2.5 },
+  { id: 'cleaner-3', name: '이수진', rating: 4.8, completedJobs: 203, photo: 'https://api.dicebear.com/7.x/personas/svg?seed=sujin', distance: 0.8 },
+  { id: 'cleaner-4', name: '최은지', rating: 4.6, completedJobs: 56, photo: 'https://api.dicebear.com/7.x/personas/svg?seed=eunji', distance: 3.1 },
 ];
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 function generateId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-// ---------------------------------------------------------------------------
-// Role
-// ---------------------------------------------------------------------------
-
+// sessionStorage: 탭별로 독립적인 역할 유지 (같은 브라우저 두 탭에서 의뢰자/청소자 동시 테스트 가능)
 function getRole(): UserRole | null {
-  const role = localStorage.getItem(STORAGE_KEYS.ROLE);
+  const role = sessionStorage.getItem(STORAGE_KEYS.ROLE);
   if (role === 'client' || role === 'cleaner') return role;
   return null;
 }
 
 function setRole(role: UserRole): void {
-  localStorage.setItem(STORAGE_KEYS.ROLE, role);
+  sessionStorage.setItem(STORAGE_KEYS.ROLE, role);
 }
-
-// ---------------------------------------------------------------------------
-// Requests CRUD
-// ---------------------------------------------------------------------------
 
 function getRequests(): CleaningRequest[] {
   try {
@@ -95,14 +48,10 @@ function saveRequest(request: CleaningRequest): CleaningRequest {
   return request;
 }
 
-function updateRequest(
-  id: string,
-  updates: Partial<Omit<CleaningRequest, 'id'>>,
-): CleaningRequest | null {
+function updateRequest(id: string, updates: Partial<Omit<CleaningRequest, 'id'>>): CleaningRequest | null {
   const requests = getRequests();
   const index = requests.findIndex((r) => r.id === id);
   if (index === -1) return null;
-
   const updated = { ...requests[index], ...updates };
   requests[index] = updated;
   localStorage.setItem(STORAGE_KEYS.REQUESTS, JSON.stringify(requests));
@@ -117,30 +66,15 @@ function deleteRequest(id: string): boolean {
   return true;
 }
 
-// ---------------------------------------------------------------------------
-// Public API object
-// ---------------------------------------------------------------------------
-
-/**
- * All data access goes through this `api` object so swapping in a real
- * backend later requires changing only this file.
- */
 export const api = {
-  // Role
   getRole,
   setRole,
-
-  // Requests
   getRequests,
   getRequestById,
   saveRequest,
   updateRequest,
   deleteRequest,
-
-  // Helpers
   generateId,
-
-  // Mock data (exposed for UI listing)
   getMockCleaners: () => MOCK_CLEANERS,
 } as const;
 

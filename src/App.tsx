@@ -35,7 +35,7 @@ function CleanRootRedirect() { return <RoleSelect />; }
 // ---------------------------------------------------------------------------
 function ClientMyPage() {
   const handleReset = () => {
-    localStorage.removeItem('cleanmatch_role');
+    sessionStorage.removeItem('cleanmatch_role');
     localStorage.removeItem('cleanmatch_requests');
     window.location.href = '/clean';
   };
@@ -74,7 +74,7 @@ function CleanerMyPage() {
   const progress = getProgressToNextGrade(completedJobs);
   const expLabels: Record<string, string> = { beginner: '입문 (1년 미만)', junior: '초급 (1~3년)', mid: '중급 (3~5년)', senior: '고급 (5년 이상)', expert: '전문가 (10년 이상)' };
   const handleReset = () => {
-    localStorage.removeItem('cleanmatch_role'); localStorage.removeItem('cleanmatch_requests');
+    sessionStorage.removeItem('cleanmatch_role'); localStorage.removeItem('cleanmatch_requests');
     localStorage.removeItem('cleanmatch_cleaner_profile'); localStorage.removeItem('cleanmatch_completed_jobs');
     localStorage.removeItem('cleanmatch_training'); window.location.href = '/clean';
   };
