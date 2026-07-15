@@ -479,12 +479,16 @@ function PriceGuide({
 function FreePhotoUploader({
   photos,
   onPhotosChange,
+  areas,
+  onAreasChange,
 }: {
   photos: Photo[];
   onPhotosChange: (photos: Photo[]) => void;
+  areas: string[];
+  onAreasChange: (areas: string[]) => void;
 }) {
-  const [areas, setAreas] = useState<string[]>([]);
   const [newArea, setNewArea] = useState('');
+  const setAreas = onAreasChange;
 
   const addArea = () => {
     const trimmed = newArea.trim();
@@ -615,6 +619,7 @@ export default function CreateRequest() {
   const [price, setPrice] = useState(0);
   const [notes, setNotes] = useState('');
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [photoAreas, setPhotoAreas] = useState<string[]>([]);
   const [area, setArea] = useState(20);
   const [priceInitialized, setPriceInitialized] = useState(false);
   const [otherSubs, setOtherSubs] = useState<string[]>([]);
@@ -823,12 +828,31 @@ export default function CreateRequest() {
 
         {step === 1 && (
           <div className="space-y-4">
-            <p className="text-sm text-gray-500">청소할 구역을 추가하고 현재 상태를 촬영해 주세요.</p>
-            <FreePhotoUploader photos={photos} onPhotosChange={setPhotos} />
-            <div className="flex gap-3 mt-4">
-              <button onClick={() => setStep(0)} className="flex-1 border border-gray-300 text-gray-600 font-semibold py-3 rounded-xl transition-colors">이전</button>
-              <button onClick={() => setStep(2)} className="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-xl transition-colors">다음</button>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-1">
+              <p className="text-sm font-medium text-amber-800">청소할 구역을 추가하고 현재 상태를 촬영해 주세요.</p>
+              <p className="text-xs text-amber-600">• 각 구역마다 최소 1장의 사진이 필요합니다.</p>
+              <p className="text-xs text-amber-600">• 청소자가 청소 후 같은 구역을 촬영하여 비교합니다.</p>
+              <p className="text-xs text-amber-600">• 사진이 없으면 의뢰를 등록할 수 없습니다.</p>
             </div>
+            <FreePhotoUploader photos={photos} onPhotosChange={setPhotos} areas={photoAreas} onAreasChange={setPhotoAreas} />
+            {(() => {
+              const areasWithoutPhoto = photoAreas.filter(a => photos.filter(p => p.zone === a).length === 0);
+              const photoValid = photoAreas.length > 0 && areasWithoutPhoto.length === 0;
+              return (
+                <>
+                  {photoAreas.length === 0 && (
+                    <p className="text-xs text-red-500 text-center">구역을 추가하고 사진을 촬영해 주세요.</p>
+                  )}
+                  {areasWithoutPhoto.length > 0 && (
+                    <p className="text-xs text-red-500 text-center">사진이 없는 구역: {areasWithoutPhoto.join(', ')}</p>
+                  )}
+                  <div className="flex gap-3 mt-4">
+                    <button onClick={() => setStep(0)} className="flex-1 border border-gray-300 text-gray-600 font-semibold py-3 rounded-xl transition-colors">이전</button>
+                    <button onClick={() => setStep(2)} disabled={!photoValid} className="flex-1 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors">다음</button>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
 
