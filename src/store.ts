@@ -1,8 +1,9 @@
-import type { UserRole, CleaningRequest, Cleaner } from './types';
+import type { UserRole, CleaningRequest, Cleaner, Review } from './types';
 
 const STORAGE_KEYS = {
   ROLE: 'cleanmatch_role',
   REQUESTS: 'cleanmatch_requests',
+  REVIEWS: 'cleanmatch_reviews',
 } as const;
 
 export const MOCK_CLEANERS: Cleaner[] = [
@@ -16,7 +17,7 @@ function generateId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-// sessionStorage: 탭별로 독립적인 역할 유지 (같은 브라우저 두 탭에서 의뢰자/청소자 동시 테스트 가능)
+// sessionStorage: 탭별로 독립적인 역할 유지
 function getRole(): UserRole | null {
   const role = sessionStorage.getItem(STORAGE_KEYS.ROLE);
   if (role === 'client' || role === 'cleaner') return role;
@@ -66,6 +67,45 @@ function deleteRequest(id: string): boolean {
   return true;
 }
 
+// --- 리뷰 관련 ---
+function getReviews(): Review[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.REVIEWS);
+    if (!raw) return [];
+    return JSON.parse(raw) as Review[];
+  } catch {
+    return [];
+  }
+}
+
+function getReviewById(id: string): Review | undefined {
+  return getReviews().find((r) => r.id === id);
+}
+
+function getReviewsByCleanerId(cleanerId: string): Review[] {
+  return getReviews().filter((r) => r.cleanerId === cleanerId);
+}
+
+function getReviewByRequestId(requestId: string): Review | undefined {
+  return getReviews().find((r) => r.requestId === requestId);
+}
+
+function saveReview(review: Review): Review {
+  const reviews = getReviews();
+  reviews.push(review);
+  localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(reviews));
+  // 리뷰 작성 후 해당 의뢰에 reviewId 저장
+  updateRequest(review.requestId, { reviewId: review.id });
+  return review;
+}
+
+function getCleanerAverageRating(cleanerId: string): number {
+  const reviews = getReviewsByCleanerId(cleanerId);
+  if (reviews.length === 0) return 0;
+  const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
+  return Math.round((sum / reviews.length) * 10) / 10;
+}
+
 export const api = {
   getRole,
   setRole,
@@ -76,6 +116,13 @@ export const api = {
   deleteRequest,
   generateId,
   getMockCleaners: () => MOCK_CLEANERS,
+  // 리뷰
+  getReviews,
+  getReviewById,
+  getReviewsByCleanerId,
+  getReviewByRequestId,
+  saveReview,
+  getCleanerAverageRating,
 } as const;
 
 export default api;

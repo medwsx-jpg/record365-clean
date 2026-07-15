@@ -10,6 +10,8 @@ import ClientHome from './pages/client/ClientHome';
 import CreateRequest from './pages/client/CreateRequest';
 import ClientFAQ from './pages/client/ClientFAQ';
 import ClientReview from './pages/client/ClientReview';
+import WriteReview from './pages/client/WriteReview';
+import CleanerProfileView from './pages/client/CleanerProfileView';
 import MatchWaiting from './pages/client/MatchWaiting';
 import MatchComplete from './pages/client/MatchComplete';
 import CleanerHome from './pages/cleaner/CleanerHome';
@@ -37,6 +39,7 @@ function ClientMyPage() {
   const handleReset = () => {
     sessionStorage.removeItem('cleanmatch_role');
     localStorage.removeItem('cleanmatch_requests');
+    localStorage.removeItem('cleanmatch_reviews');
     window.location.href = '/clean';
   };
   return (
@@ -73,10 +76,16 @@ function CleanerMyPage() {
   const nextGrade = getNextGrade(completedJobs);
   const progress = getProgressToNextGrade(completedJobs);
   const expLabels: Record<string, string> = { beginner: '입문 (1년 미만)', junior: '초급 (1~3년)', mid: '중급 (3~5년)', senior: '고급 (5년 이상)', expert: '전문가 (10년 이상)' };
+
+  // 내 리뷰 평점
+  const myRating = api.getCleanerAverageRating('self');
+  const myReviews = api.getReviewsByCleanerId('self');
+
   const handleReset = () => {
     sessionStorage.removeItem('cleanmatch_role'); localStorage.removeItem('cleanmatch_requests');
     localStorage.removeItem('cleanmatch_cleaner_profile'); localStorage.removeItem('cleanmatch_completed_jobs');
-    localStorage.removeItem('cleanmatch_training'); window.location.href = '/clean';
+    localStorage.removeItem('cleanmatch_training'); localStorage.removeItem('cleanmatch_reviews');
+    window.location.href = '/clean';
   };
   return (
     <>
@@ -96,6 +105,23 @@ function CleanerMyPage() {
             <p className="text-xs text-gray-400 mt-0.5">완료 {completedJobs}건</p>
           </div>
         </div>
+        {/* 평점 요약 */}
+        {myReviews.length > 0 && (
+          <div className="mt-3 bg-yellow-50 rounded-lg p-3 flex items-center gap-2">
+            <div className="flex gap-0.5">
+              {[1,2,3,4,5].map((s) => (
+                <svg key={s} width="14" height="14" viewBox="0 0 24 24"
+                  fill={s <= Math.round(myRating) ? '#facc15' : 'none'}
+                  stroke={s <= Math.round(myRating) ? '#facc15' : '#d1d5db'}
+                  strokeWidth="1.5">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+              ))}
+            </div>
+            <span className="text-sm font-bold text-gray-700">{myRating.toFixed(1)}</span>
+            <span className="text-xs text-gray-500">({myReviews.length}개 리뷰)</span>
+          </div>
+        )}
         {nextGrade && (
           <div className="mt-4">
             <div className="flex items-center justify-between mb-1">
@@ -208,6 +234,8 @@ export default function App() {
         <Route path="/clean/client/matching/:id" element={<RoleGuard role="client"><MatchWaiting /></RoleGuard>} />
         <Route path="/clean/client/matched/:id" element={<RoleGuard role="client"><MatchComplete /></RoleGuard>} />
         <Route path="/clean/client/review/:id" element={<RoleGuard role="client"><ClientReview /></RoleGuard>} />
+        <Route path="/clean/client/review/:id/write" element={<RoleGuard role="client"><WriteReview /></RoleGuard>} />
+        <Route path="/clean/client/cleaner/:cleanerId" element={<RoleGuard role="client"><CleanerProfileView /></RoleGuard>} />
         <Route path="/clean/faq" element={<ClientFAQ />} />
         <Route path="/clean/cleaner" element={<RoleGuard role="cleaner"><CleanerHome /></RoleGuard>} />
         <Route path="/clean/cleaner/request/:id" element={<RoleGuard role="cleaner"><RequestDetail /></RoleGuard>} />

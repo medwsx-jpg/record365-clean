@@ -13,7 +13,6 @@ export default function ClientReview() {
   const [request, setRequest] = useState<CleaningRequest | null>(null);
   const [activeZone, setActiveZone] = useState<string>('');
   const [viewMode, setViewMode] = useState<ViewMode>('side');
-  const [confirmed, setConfirmed] = useState(false);
   const [lightbox, setLightbox] = useState<{ photos: { id: string; dataUrl: string; label?: string }[]; index: number } | null>(null);
 
   useEffect(() => {
@@ -35,6 +34,8 @@ export default function ClientReview() {
   }
 
   const isCompleted = request.status === 'completed';
+  const hasReview = !!request.reviewId;
+  const existingReview = hasReview ? api.getReviewById(request.reviewId!) : null;
   const beforePhotos = request.photos.filter((p) => p.type === 'before');
   const afterPhotos = request.afterPhotos || [];
   const zones = [...new Set(beforePhotos.map((p) => p.zone))];
@@ -53,29 +54,24 @@ export default function ClientReview() {
 
   const handleConfirm = () => {
     api.updateRequest(request.id, { status: 'completed' });
-    setConfirmed(true);
+    // 확인 완료 후 리뷰 작성 페이지로 이동
+    navigate(`/clean/client/review/${request.id}/write`, { replace: true });
   };
 
-  if (confirmed) {
+  const renderStars = (rating: number) => {
     return (
-      <div className="min-h-screen bg-gray-50 max-w-[480px] mx-auto flex flex-col items-center justify-center px-6">
-        <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-4">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="20 6 9 17 4 12" />
+      <div className="flex gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <svg key={star} width="14" height="14" viewBox="0 0 24 24"
+            fill={star <= rating ? '#facc15' : 'none'}
+            stroke={star <= rating ? '#facc15' : '#d1d5db'}
+            strokeWidth="1.5">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
           </svg>
-        </div>
-        <h2 className="text-xl font-bold text-gray-800 mb-2">확인 완료!</h2>
-        <p className="text-sm text-gray-500 text-center mb-2">청소가 정상적으로 완료되었습니다.</p>
-        <div className="bg-green-50 rounded-xl p-4 w-full mb-6 text-center">
-          <p className="text-xs text-green-600 mb-1">청소자 정산 금액</p>
-          <p className="text-2xl font-bold text-green-700">{payout.toLocaleString('ko-KR')}원</p>
-          <p className="text-xs text-gray-400 mt-1">수수료 {fee.toLocaleString('ko-KR')}원 차감</p>
-        </div>
-        <p className="text-xs text-gray-400 mb-8">이용해주셔서 감사합니다.</p>
-        <button onClick={() => navigate('/clean/client')} className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3.5 rounded-xl transition-colors">홈으로</button>
+        ))}
       </div>
     );
-  }
+  };
 
   return (
     <div className={`min-h-screen bg-gray-50 max-w-[480px] mx-auto ${isCompleted ? 'pb-8' : 'pb-24'}`}>
@@ -224,6 +220,33 @@ export default function ClientReview() {
           {isCompleted ? '정산이 완료되었습니다' : '확인을 누르시면 정산이 진행됩니다'}
         </p>
       </section>
+
+      {/* 리뷰 표시 (완료 + 리뷰 작성된 경우) */}
+      {isCompleted && existingReview && (
+        <section className="bg-white mt-2 p-4">
+          <h2 className="text-sm font-semibold text-gray-900 mb-3">내 리뷰</h2>
+          <div className="bg-yellow-50 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              {renderStars(existingReview.rating)}
+              <span className="text-sm font-bold text-gray-700">{existingReview.rating}.0</span>
+            </div>
+            {existingReview.comment && (
+              <p className="text-sm text-gray-700">{existingReview.comment}</p>
+            )}
+            <p className="text-xs text-gray-400 mt-2">{new Date(existingReview.createdAt).toLocaleDateString('ko-KR')}</p>
+          </div>
+        </section>
+      )}
+
+      {/* 리뷰 작성 버튼 (완료 + 리뷰 없는 경우) */}
+      {isCompleted && !hasReview && (
+        <div className="px-4 mt-4">
+          <button onClick={() => navigate(`/clean/client/review/${request.id}/write`)}
+            className="w-full py-3 bg-yellow-400 text-gray-900 font-bold rounded-xl text-sm active:bg-yellow-500 transition-colors flex items-center justify-center gap-2">
+            <span>⭐</span> 리뷰 작성하기
+          </button>
+        </div>
+      )}
 
       {!isCompleted && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 max-w-[480px] mx-auto z-50">

@@ -1,6 +1,6 @@
 export type UserRole = 'client' | 'cleaner';
 
-export type RequestStatus = 'pending' | 'matching' | 'matched' | 'in_progress' | 'waiting_confirm' | 'completed';
+export type RequestStatus = 'pending' | 'matching' | 'matched' | 'in_progress' | 'waiting_confirm' | 'completed' | 'cancelled';
 
 export type CleaningZone = 'sink' | 'bathroom' | 'living' | 'kitchen' | 'bedroom' | 'other';
 
@@ -33,6 +33,17 @@ export interface Photo {
   createdAt: string;
 }
 
+export interface Review {
+  id: string;
+  requestId: string;
+  cleanerId: string;
+  cleanerName: string;
+  clientId: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
 export interface CleaningRequest {
   id: string;
   clientId: string;
@@ -51,6 +62,9 @@ export interface CleaningRequest {
   checklist?: ChecklistItem[];
   afterPhotos?: Photo[];
   completedAt?: string;
+  reviewId?: string;
+  cancelReason?: string;
+  cancelledAt?: string;
   createdAt: string;
 }
 
@@ -93,3 +107,11 @@ export const DEFAULT_CHECKLIST: Omit<ChecklistItem, 'id'>[] = [
 export function getZoneLabel(zone: string): string {
   return (ZONE_LABELS as Record<string, string>)[zone] ?? zone;
 }
+
+export const CANCEL_REASONS = [
+  '일정이 변경되었습니다',
+  '다른 청소 서비스를 이용합니다',
+  '가격이 맞지 않습니다',
+  '개인 사정으로 취소합니다',
+  '기타',
+] as const;

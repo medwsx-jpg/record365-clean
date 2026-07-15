@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { CleaningRequest, RequestStatus } from '../../types';
-import { CATEGORY_LABELS } from '../../types';
+import { CATEGORY_LABELS, CANCEL_REASONS } from '../../types';
 import { api } from '../../store';
 import BottomNav from '../../components/BottomNav';
 
@@ -14,6 +14,7 @@ const STATUS_CONFIG: Record<RequestStatus, { label: string; bg: string; text: st
   in_progress: { label: '청소 진행중', bg: 'bg-blue-100', text: 'text-blue-700' },
   waiting_confirm: { label: '확인 대기', bg: 'bg-orange-100', text: 'text-orange-700' },
   completed: { label: '완료', bg: 'bg-gray-100', text: 'text-gray-500' },
+  cancelled: { label: '취소됨', bg: 'bg-red-50', text: 'text-red-500' },
 };
 
 function StatusBadge({ status }: { status: RequestStatus }) {
@@ -41,15 +42,31 @@ function getRemainingTime(completedAt?: string): string | null {
   return `${minutes}분`;
 }
 
+function renderStars(rating: number) {
+  return (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((s) => (
+        <svg key={s} width="12" height="12" viewBox="0 0 24 24"
+          fill={s <= rating ? '#facc15' : 'none'}
+          stroke={s <= rating ? '#facc15' : '#d1d5db'}
+          strokeWidth="1.5">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
 export default function ClientHome() {
   const navigate = useNavigate();
   const [requests, setRequests] = useState<CleaningRequest[]>([]);
   const [, setTick] = useState(0);
+  const [cancelModal, setCancelModal] = useState<{ requestId: string; step: 'confirm' | 'reason' } | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
 
   useEffect(() => {
     const loadAndAutoComplete = () => {
       const reqs = api.getRequests();
-      // 12시간 경과한 waiting_confirm → 자동 완료
       reqs.forEach((r) => {
         if (r.status === 'waiting_confirm' && r.completedAt) {
           const deadline = new Date(r.completedAt).getTime() + AUTO_COMPLETE_HOURS * 60 * 60 * 1000;
@@ -60,13 +77,11 @@ export default function ClientHome() {
       });
       setRequests(api.getRequests());
     };
-
     loadAndAutoComplete();
     const interval = setInterval(loadAndAutoComplete, 3000);
     return () => clearInterval(interval);
   }, []);
 
-  // 남은 시간 표시를 위해 1분마다 리렌더
   useEffect(() => {
     const timer = setInterval(() => setTick((t) => t + 1), 60000);
     return () => clearInterval(timer);
@@ -87,6 +102,28 @@ export default function ClientHome() {
     } else if (req.status === 'completed') {
       navigate(`/clean/client/review/${req.id}`);
     }
+  };
+
+  const handleCancelStart = (e: React.MouseEvent, requestId: string) => {
+    e.stopPropagation();
+    setCancelModal({ requestId, step: 'confirm' });
+    setCancelReason('');
+  };
+
+  const handleCancelConfirm = () => {
+    if (!cancelModal) return;
+    if (cancelModal.step === 'confirm') {
+      setCancelModal({ ...cancelModal, step: 'reason' });
+      return;
+    }
+    // 취소 처리
+    api.updateRequest(cancelModal.requestId, {
+      status: 'cancelled',
+      cancelReason: cancelReason || '취소 사유 없음',
+      cancelledAt: new Date().toISOString(),
+    });
+    setCancelModal(null);
+    setRequests(api.getRequests());
   };
 
   return (
@@ -166,6 +203,16 @@ export default function ClientHome() {
                     {req.cleanerName && req.status !== 'matching' && (
                       <p className="text-xs text-gray-400 mt-1">청소자: {req.cleanerName}</p>
                     )}
+                    {/* 취소 버튼: pending 상태만 */}
+                    {req.status === 'pending' && (
+                      <div className="mt-3 flex justify-end">
+                        <span
+                          onClick={(e) => handleCancelStart(e, req.id)}
+                          className="text-xs text-red-400 underline cursor-pointer hover:text-red-500">
+                          의뢰 취소
+                        </span>
+                      </div>
+                    )}
                   </button>
                 );
               })}
@@ -181,29 +228,87 @@ export default function ClientHome() {
             </div>
           ) : (
             <div className="space-y-3">
-              {completed.map((req) => (
-                <button
-                  key={req.id}
-                  onClick={() => handleCardClick(req)}
-                  className="w-full bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-left active:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-800">
-                      {CATEGORY_LABELS[req.category]} · {req.date}
-                    </span>
-                    <StatusBadge status={req.status} />
-                  </div>
-                  <p className="text-sm text-gray-600 truncate">{req.address}</p>
-                  <p className="text-sm font-semibold text-green-600 mt-1">{formatPrice(req.price)}</p>
-                  {req.cleanerName && (
-                    <p className="text-xs text-gray-400 mt-1">청소자: {req.cleanerName}</p>
-                  )}
-                </button>
-              ))}
+              {completed.map((req) => {
+                const review = req.reviewId ? api.getReviewById(req.reviewId) : null;
+                return (
+                  <button
+                    key={req.id}
+                    onClick={() => handleCardClick(req)}
+                    className="w-full bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-left active:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-800">
+                        {CATEGORY_LABELS[req.category]} · {req.date}
+                      </span>
+                      <StatusBadge status={req.status} />
+                    </div>
+                    <p className="text-sm text-gray-600 truncate">{req.address}</p>
+                    <p className="text-sm font-semibold text-green-600 mt-1">{formatPrice(req.price)}</p>
+                    {req.cleanerName && (
+                      <div className="flex items-center justify-between mt-1">
+                        <p className="text-xs text-gray-400">청소자: {req.cleanerName}</p>
+                        {review ? renderStars(review.rating) : (
+                          <span className="text-xs text-yellow-500 font-medium">리뷰 작성하기 ⭐</span>
+                        )}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
         </section>
       </div>
+
+      {/* 취소 모달 */}
+      {cancelModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-xl">
+            {cancelModal.step === 'confirm' ? (
+              <>
+                <div className="p-6 text-center">
+                  <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-3">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round">
+                      <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">의뢰를 취소하시겠습니까?</h3>
+                  <p className="text-sm text-gray-500">취소하면 되돌릴 수 없습니다.</p>
+                </div>
+                <div className="flex border-t border-gray-200">
+                  <button onClick={() => setCancelModal(null)}
+                    className="flex-1 py-3.5 text-sm font-medium text-gray-600 border-r border-gray-200">아니오</button>
+                  <button onClick={handleCancelConfirm}
+                    className="flex-1 py-3.5 text-sm font-medium text-red-500">취소하기</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="p-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">취소 사유를 선택해주세요</h3>
+                  <div className="space-y-2">
+                    {CANCEL_REASONS.map((reason) => (
+                      <button key={reason} onClick={() => setCancelReason(reason)}
+                        className={`w-full text-left px-4 py-3 rounded-xl text-sm transition-colors ${
+                          cancelReason === reason ? 'bg-red-50 border-red-300 border text-red-700 font-medium' : 'bg-gray-50 border border-gray-200 text-gray-700'
+                        }`}>
+                        {reason}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex border-t border-gray-200">
+                  <button onClick={() => setCancelModal(null)}
+                    className="flex-1 py-3.5 text-sm font-medium text-gray-600 border-r border-gray-200">돌아가기</button>
+                  <button onClick={handleCancelConfirm}
+                    disabled={!cancelReason}
+                    className={`flex-1 py-3.5 text-sm font-medium ${cancelReason ? 'text-red-500' : 'text-gray-300'}`}>확인</button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       <BottomNav />
     </div>

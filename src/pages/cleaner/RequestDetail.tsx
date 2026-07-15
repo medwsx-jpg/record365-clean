@@ -3,12 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import type { CleaningRequest } from '../../types';
 import { CATEGORY_LABELS, getZoneLabel } from '../../types';
 import { api, MOCK_CLEANERS } from '../../store';
+import PhotoLightbox from '../../components/PhotoLightbox';
 
 export default function RequestDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [request, setRequest] = useState<CleaningRequest | null>(null);
   const [activeZone, setActiveZone] = useState<string>('');
+  const [lightbox, setLightbox] = useState<{ photos: { id: string; dataUrl: string; label?: string }[]; index: number } | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -31,6 +33,17 @@ export default function RequestDetail() {
   const beforePhotos = request.photos.filter((p) => p.type === 'before');
   const zones = [...new Set(beforePhotos.map((p) => p.zone))];
   const zonePhotos = beforePhotos.filter((p) => p.zone === activeZone);
+
+  const price = request.price;
+  const fee = Math.round(price * 0.15);
+  const payout = price - fee;
+
+  const openLightbox = (clickedIndex: number) => {
+    setLightbox({
+      photos: zonePhotos.map((p) => ({ id: p.id, dataUrl: p.dataUrl, label: getZoneLabel(p.zone) })),
+      index: clickedIndex,
+    });
+  };
 
   const handleApply = () => {
     const profile = JSON.parse(localStorage.getItem('cleanmatch_cleaner_profile') || 'null');
@@ -64,7 +77,7 @@ export default function RequestDetail() {
       <section className="bg-white mt-2 p-4">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-medium text-gray-700">{CATEGORY_LABELS[request.category]}</span>
-          <span className="text-lg font-bold text-green-600">{request.price.toLocaleString('ko-KR')}원</span>
+          <span className="text-lg font-bold text-green-600">{price.toLocaleString('ko-KR')}원</span>
         </div>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
@@ -84,9 +97,29 @@ export default function RequestDetail() {
         </div>
       </section>
 
+      {/* 예상 정산 정보 */}
+      <section className="bg-white mt-2 p-4">
+        <h2 className="text-sm font-semibold text-gray-900 mb-2">예상 정산 정보</h2>
+        <div className="bg-green-50 rounded-xl p-4 space-y-2">
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-gray-600">의뢰 금액</span>
+            <span className="font-medium text-gray-900">{price.toLocaleString('ko-KR')}원</span>
+          </div>
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-gray-600">수수료 (15%)</span>
+            <span className="font-medium text-red-500">-{fee.toLocaleString('ko-KR')}원</span>
+          </div>
+          <div className="border-t border-green-200 pt-2 flex justify-between items-center">
+            <span className="text-sm font-semibold text-gray-900">예상 수령액</span>
+            <span className="text-lg font-bold text-green-600">{payout.toLocaleString('ko-KR')}원</span>
+          </div>
+        </div>
+      </section>
+
       {/* 청소 구역 사진 */}
       <section className="bg-white mt-2 py-4">
-        <h2 className="px-4 text-sm font-semibold text-gray-900 mb-3">청소 구역 사진</h2>
+        <h2 className="px-4 text-sm font-semibold text-gray-900 mb-1">청소 구역 사진</h2>
+        <p className="px-4 text-xs text-gray-400 mb-3">사진을 터치하면 크게 볼 수 있습니다</p>
         {zones.length > 0 ? (
           <>
             <div className="overflow-x-auto scrollbar-hide px-4">
@@ -105,8 +138,10 @@ export default function RequestDetail() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3 px-4 mt-3">
-              {zonePhotos.map((photo) => (
-                <div key={photo.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+              {zonePhotos.map((photo, idx) => (
+                <div key={photo.id}
+                  className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm cursor-pointer active:opacity-80"
+                  onClick={() => openLightbox(idx)}>
                   <div className="relative aspect-square">
                     <img src={photo.dataUrl} alt={`${getZoneLabel(photo.zone)} 사진`} className="w-full h-full object-cover" />
                   </div>
@@ -126,6 +161,10 @@ export default function RequestDetail() {
           지원하기
         </button>
       </div>
+
+      {lightbox && (
+        <PhotoLightbox photos={lightbox.photos} initialIndex={lightbox.index} onClose={() => setLightbox(null)} />
+      )}
     </div>
   );
 }
