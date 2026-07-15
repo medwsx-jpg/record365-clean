@@ -548,8 +548,8 @@ function FreePhotoUploader({
             <circle cx="8.5" cy="8.5" r="1.5" />
             <polyline points="21 15 16 10 5 21" />
           </svg>
-          <p className="text-sm">중요하게 생각하는 구역을 추가하고</p>
-          <p className="text-sm">해당 구역의 사진을 찍어주세요</p>
+          <p className="text-sm">청소할 구역을 추가하고</p>
+          <p className="text-sm">현재 상태를 촬영해 주세요</p>
         </div>
       )}
 
@@ -823,7 +823,7 @@ export default function CreateRequest() {
 
         {step === 1 && (
           <div className="space-y-4">
-            <p className="text-sm text-gray-500">중요하게 생각하는 구역을 추가하고 사진을 등록해 주세요.</p>
+            <p className="text-sm text-gray-500">청소할 구역을 추가하고 현재 상태를 촬영해 주세요.</p>
             <FreePhotoUploader photos={photos} onPhotosChange={setPhotos} />
             <div className="flex gap-3 mt-4">
               <button onClick={() => setStep(0)} className="flex-1 border border-gray-300 text-gray-600 font-semibold py-3 rounded-xl transition-colors">이전</button>
