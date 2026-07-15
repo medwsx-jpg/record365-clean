@@ -105,25 +105,78 @@ const SPACE_ITEMS: { key: keyof SpaceConfig; label: string; icon: string; max: n
   { key: 'verandas', label: '베란다', icon: '🌿', max: 3 },
 ];
 
-// 가격 기준 (원)
 const PRICE_PER = {
   rooms: 15000,
   livingRooms: 20000,
   bathrooms: 18000,
   kitchens: 15000,
   verandas: 10000,
-  base: 30000, // 기본료
+  base: 30000,
 };
 
-// 카테고리별 기본 가격
 const CATEGORY_BASE_PRICE: Record<CleaningCategory, number> = {
-  home: 0, // 공간 구성으로 계산
-  office: 150000,
-  store: 120000,
+  home: 0,
+  office: 0,
+  store: 0,
   move: 200000,
   appliance: 50000,
   other: 100000,
 };
+
+const PRICE_PER_PYEONG: Record<string, number> = {
+  office: 5000,
+  store: 5500,
+};
+const AREA_BASE: Record<string, number> = {
+  office: 50000,
+  store: 50000,
+};
+
+// 평수 입력 컴포넌트
+function AreaInput({
+  value,
+  onChange,
+  category,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  category: string;
+}) {
+  const label = category === 'office' ? '사무실 면적' : '업장 면적';
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+      <div className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3">
+        <span className="text-lg">📐</span>
+        <input
+          type="number"
+          inputMode="numeric"
+          value={value || ''}
+          onChange={(e) => onChange(Math.max(0, parseInt(e.target.value) || 0))}
+          placeholder="평수 입력"
+          className="flex-1 text-sm focus:outline-none"
+        />
+        <span className="text-sm text-gray-400">평</span>
+      </div>
+      <div className="flex gap-2 mt-2">
+        {[10, 20, 30, 50, 100].map((p) => (
+          <button
+            key={p}
+            type="button"
+            onClick={() => onChange(p)}
+            className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+              value === p
+                ? 'border-green-500 bg-green-50 text-green-700 font-medium'
+                : 'border-gray-200 text-gray-500 active:bg-gray-100'
+            }`}
+          >
+            {p}평
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function SpaceSelector({
   config,
@@ -140,9 +193,7 @@ function SpaceSelector({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        공간 구성
-      </label>
+      <label className="block text-sm font-medium text-gray-700 mb-2">공간 구성</label>
       <div className="space-y-2">
         {SPACE_ITEMS.map(({ key, label, icon }) => (
           <div
@@ -164,9 +215,7 @@ function SpaceSelector({
                   <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
               </button>
-              <span className="w-6 text-center text-sm font-bold text-gray-800">
-                {config[key]}
-              </span>
+              <span className="w-6 text-center text-sm font-bold text-gray-800">{config[key]}</span>
               <button
                 type="button"
                 onClick={() => adjust(key, 1)}
@@ -192,11 +241,13 @@ function SpaceSelector({
 function PriceGuide({
   category,
   spaceConfig,
+  areaPyeong,
   price,
   onPriceChange,
 }: {
   category: CleaningCategory;
   spaceConfig: SpaceConfig;
+  areaPyeong: number;
   price: number;
   onPriceChange: (price: number) => void;
 }) {
@@ -211,8 +262,11 @@ function PriceGuide({
         spaceConfig.verandas * PRICE_PER.verandas
       );
     }
+    if ((category === 'office' || category === 'store') && areaPyeong > 0) {
+      return (AREA_BASE[category] || 50000) + areaPyeong * (PRICE_PER_PYEONG[category] || 5000);
+    }
     return CATEGORY_BASE_PRICE[category];
-  }, [category, spaceConfig]);
+  }, [category, spaceConfig, areaPyeong]);
 
   const diff = price - guidePrice;
   const diffLabel =
@@ -231,11 +285,8 @@ function PriceGuide({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        희망 가격
-      </label>
+      <label className="block text-sm font-medium text-gray-700 mb-2">희망 가격</label>
 
-      {/* 가이드 금액 표시 */}
       <div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-3">
         <div className="flex items-center justify-between">
           <div>
@@ -257,9 +308,13 @@ function PriceGuide({
             기본료 {PRICE_PER.base.toLocaleString()}원 + 공간 구성 기반 산출
           </p>
         )}
+        {(category === 'office' || category === 'store') && (
+          <p className="text-[11px] text-green-500 mt-1">
+            기본료 {(AREA_BASE[category] || 50000).toLocaleString()}원 + {areaPyeong}평 × {(PRICE_PER_PYEONG[category] || 5000).toLocaleString()}원
+          </p>
+        )}
       </div>
 
-      {/* 금액 조정 */}
       <div className="bg-white border border-gray-200 rounded-xl p-4">
         <div className="flex items-center justify-center gap-4 mb-2">
           <button
@@ -390,11 +445,7 @@ function FreePhotoUploader({
           <div key={area} className="bg-white rounded-xl p-3 border border-gray-200">
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-sm font-medium text-gray-700">{area}</h4>
-              <button
-                type="button"
-                onClick={() => removeArea(area)}
-                className="text-xs text-red-400 hover:text-red-600"
-              >
+              <button type="button" onClick={() => removeArea(area)} className="text-xs text-red-400 hover:text-red-600">
                 구역 삭제
               </button>
             </div>
@@ -417,12 +468,7 @@ function FreePhotoUploader({
                   <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
                 <span className="text-[10px] mt-0.5">촬영</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFile(area)}
-                />
+                <input type="file" accept="image/*" className="hidden" onChange={handleFile(area)} />
               </label>
             </div>
           </div>
@@ -455,9 +501,9 @@ export default function CreateRequest() {
   const [price, setPrice] = useState(0);
   const [notes, setNotes] = useState('');
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [area, setArea] = useState(20);
   const [priceInitialized, setPriceInitialized] = useState(false);
 
-  // 카테고리 선택 시 가이드 금액으로 초기화
   const handleCategorySelect = (cat: CleaningCategory) => {
     setCategory(cat);
     if (!priceInitialized) {
@@ -470,6 +516,9 @@ export default function CreateRequest() {
           spaceConfig.kitchens * PRICE_PER.kitchens +
           spaceConfig.verandas * PRICE_PER.verandas;
         setPrice(guide);
+      } else if (cat === 'office' || cat === 'store') {
+        const guide = (AREA_BASE[cat] || 50000) + area * (PRICE_PER_PYEONG[cat] || 5000);
+        setPrice(guide);
       } else {
         setPrice(CATEGORY_BASE_PRICE[cat]);
       }
@@ -477,7 +526,6 @@ export default function CreateRequest() {
     }
   };
 
-  // 공간 구성 변경 시 가격도 자동 업데이트 (수동 조정 전까지)
   const handleSpaceChange = (config: SpaceConfig) => {
     setSpaceConfig(config);
     if (category === 'home') {
@@ -488,6 +536,14 @@ export default function CreateRequest() {
         config.bathrooms * PRICE_PER.bathrooms +
         config.kitchens * PRICE_PER.kitchens +
         config.verandas * PRICE_PER.verandas;
+      setPrice(guide);
+    }
+  };
+
+  const handleAreaChange = (newArea: number) => {
+    setArea(newArea);
+    if (category === 'office' || category === 'store') {
+      const guide = (AREA_BASE[category] || 50000) + newArea * (PRICE_PER_PYEONG[category] || 5000);
       setPrice(guide);
     }
   };
@@ -511,6 +567,12 @@ export default function CreateRequest() {
 
   const handleSubmit = () => {
     if (!category) return;
+    const notesWithInfo = category === 'home'
+      ? `[공간] ${spaceLabel}\n${notes}`.trim()
+      : (category === 'office' || category === 'store')
+      ? `[면적] ${area}평\n${notes}`.trim()
+      : notes;
+
     const request: CleaningRequest = {
       id: api.generateId(),
       clientId: 'user-1',
@@ -519,7 +581,7 @@ export default function CreateRequest() {
       time,
       address: fullAddress,
       price,
-      notes: category === 'home' ? `[공간] ${spaceLabel}\n${notes}`.trim() : notes,
+      notes: notesWithInfo,
       photos,
       status: 'matching',
       createdAt: new Date().toISOString(),
@@ -546,9 +608,12 @@ export default function CreateRequest() {
           <div className="space-y-4">
             <CategorySelector selected={category} onSelect={handleCategorySelect} />
 
-            {/* 집 청소일 때 공간 구성 */}
             {category === 'home' && (
               <SpaceSelector config={spaceConfig} onChange={handleSpaceChange} />
+            )}
+
+            {(category === 'office' || category === 'store') && (
+              <AreaInput value={area} onChange={handleAreaChange} category={category} />
             )}
 
             <div>
@@ -589,11 +654,11 @@ export default function CreateRequest() {
               )}
             </div>
 
-            {/* 가격 가이드 */}
             {category && (
               <PriceGuide
                 category={category}
                 spaceConfig={spaceConfig}
+                areaPyeong={area}
                 price={price}
                 onPriceChange={setPrice}
               />
@@ -629,6 +694,12 @@ export default function CreateRequest() {
                   <>
                     <span className="text-gray-500">공간 구성</span>
                     <span className="text-gray-800 font-medium text-xs">{spaceLabel}</span>
+                  </>
+                )}
+                {(category === 'office' || category === 'store') && (
+                  <>
+                    <span className="text-gray-500">면적</span>
+                    <span className="text-gray-800 font-medium">{area}평</span>
                   </>
                 )}
                 <span className="text-gray-500">날짜</span>
