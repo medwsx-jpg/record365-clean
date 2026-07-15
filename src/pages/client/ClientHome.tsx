@@ -51,10 +51,8 @@ export default function ClientHome() {
   const completed = requests.filter((r) => r.status === 'completed');
 
   const handleCardClick = (req: CleaningRequest) => {
-    if (req.status === 'matching') {
+    if (req.status === 'pending') {
       navigate(`/clean/client/matching/${req.id}`);
-    } else if (req.status === 'matched') {
-      navigate(`/clean/client/matched/${req.id}`);
     } else if (req.status === 'waiting_confirm') {
       navigate(`/clean/client/review/${req.id}`);
     } else if (req.status === 'completed') {

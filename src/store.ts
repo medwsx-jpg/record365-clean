@@ -118,37 +118,6 @@ function deleteRequest(id: string): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Matching simulation
-// ---------------------------------------------------------------------------
-
-/**
- * Simulates an asynchronous matching process.
- * After ~5 seconds the request transitions from 'matching' → 'matched'
- * with a randomly chosen mock cleaner.
- *
- * Returns a cleanup function that cancels the pending timeout.
- */
-function simulateMatching(requestId: string): () => void {
-  // Immediately mark as 'matching'
-  updateRequest(requestId, { status: 'matching' });
-
-  const timer = window.setTimeout(() => {
-    const cleaner =
-      MOCK_CLEANERS[Math.floor(Math.random() * MOCK_CLEANERS.length)];
-
-    updateRequest(requestId, {
-      status: 'matched',
-      cleanerId: cleaner.id,
-      cleanerName: cleaner.name,
-      cleanerRating: cleaner.rating,
-      cleanerPhoto: cleaner.photo,
-    });
-  }, 5000);
-
-  return () => clearTimeout(timer);
-}
-
-// ---------------------------------------------------------------------------
 // Public API object
 // ---------------------------------------------------------------------------
 
@@ -167,9 +136,6 @@ export const api = {
   saveRequest,
   updateRequest,
   deleteRequest,
-
-  // Matching
-  simulateMatching,
 
   // Helpers
   generateId,

@@ -722,11 +722,11 @@ export default function CreateRequest() {
       price,
       notes: notesWithInfo,
       photos,
-      status: 'matching',
+      status: 'pending',
       createdAt: new Date().toISOString(),
     };
     api.saveRequest(request);
-    navigate(`/clean/client/matching/${request.id}`);
+    navigate('/clean/client');
   };
 
   return (

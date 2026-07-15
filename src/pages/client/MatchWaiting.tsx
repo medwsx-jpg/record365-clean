@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { CleaningRequest } from '../../types';
 import { api } from '../../store';
@@ -7,25 +7,13 @@ export default function MatchWaiting() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [request, setRequest] = useState<CleaningRequest | undefined>();
-  const cleanupRef = useRef<(() => void) | null>(null);
 
-  // Start matching simulation on mount
   useEffect(() => {
     if (!id) return;
-
-    const req = api.getRequestById(id);
-    setRequest(req);
-
-    if (req && req.status !== 'matched') {
-      cleanupRef.current = api.simulateMatching(id);
-    }
-
-    return () => {
-      cleanupRef.current?.();
-    };
+    setRequest(api.getRequestById(id));
   }, [id]);
 
-  // Poll for status changes
+  // Poll for status changes (cleaner accepts → in_progress)
   useEffect(() => {
     if (!id) return;
 
@@ -33,20 +21,19 @@ export default function MatchWaiting() {
       const updated = api.getRequestById(id);
       if (updated) {
         setRequest(updated);
-        if (updated.status === 'matched') {
+        if (updated.status === 'in_progress') {
           clearInterval(interval);
-          navigate(`/clean/client/matched/${id}`, { replace: true });
+          navigate('/clean/client', { replace: true });
         }
       }
-    }, 1000);
+    }, 2000);
 
     return () => clearInterval(interval);
   }, [id, navigate]);
 
   const handleCancel = () => {
     if (!id) return;
-    cleanupRef.current?.();
-    api.updateRequest(id, { status: 'pending' });
+    api.deleteRequest(id);
     navigate('/clean/client', { replace: true });
   };
 
@@ -87,10 +74,10 @@ export default function MatchWaiting() {
 
       {/* Message */}
       <h2 className="text-lg font-bold text-gray-800 mb-2 text-center">
-        매칭 중...
+        청소자 대기 중...
       </h2>
       <p className="text-sm text-gray-500 text-center mb-8">
-        주변 청소자에게 알림을 보내고 있습니다...
+        청소자가 의뢰를 수락하면 알려드릴게요.
       </p>
 
       {/* Request summary */}
