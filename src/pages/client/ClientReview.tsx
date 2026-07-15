@@ -34,18 +34,16 @@ export default function ClientReview() {
     );
   }
 
+  const isCompleted = request.status === 'completed';
   const beforePhotos = request.photos.filter((p) => p.type === 'before');
   const afterPhotos = request.afterPhotos || [];
   const zones = [...new Set(beforePhotos.map((p) => p.zone))];
-
   const currentBeforePhotos = beforePhotos.filter((p) => p.zone === activeZone);
   const currentAfterPhotos = afterPhotos.filter((p) => p.zone === activeZone);
-
   const price = request.price;
   const fee = Math.round(price * 0.15);
   const payout = price - fee;
 
-  // 라이트박스용 사진 배열 생성
   const openLightbox = (photoList: typeof beforePhotos, clickedIndex: number, labelPrefix: string) => {
     setLightbox({
       photos: photoList.map((p) => ({ id: p.id, dataUrl: p.dataUrl, label: `${labelPrefix} - ${getZoneLabel(p.zone)}` })),
@@ -74,35 +72,44 @@ export default function ClientReview() {
           <p className="text-xs text-gray-400 mt-1">수수료 {fee.toLocaleString('ko-KR')}원 차감</p>
         </div>
         <p className="text-xs text-gray-400 mb-8">이용해주셔서 감사합니다.</p>
-        <button onClick={() => navigate('/clean/client')} className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3.5 rounded-xl transition-colors">
-          홈으로
-        </button>
+        <button onClick={() => navigate('/clean/client')} className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3.5 rounded-xl transition-colors">홈으로</button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 max-w-[480px] mx-auto pb-24">
+    <div className={`min-h-screen bg-gray-50 max-w-[480px] mx-auto ${isCompleted ? 'pb-8' : 'pb-24'}`}>
       <header className="sticky top-0 z-40 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="text-gray-600">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
         </button>
-        <h1 className="text-lg font-bold text-gray-900">청소 결과 확인</h1>
+        <h1 className="text-lg font-bold text-gray-900">{isCompleted ? '청소 결과' : '청소 결과 확인'}</h1>
       </header>
 
-      <div className="bg-blue-50 border-b border-blue-100 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" className="shrink-0">
-            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-          <p className="text-sm text-blue-700">청소자가 작업을 완료했습니다. 결과를 확인해주세요.</p>
+      {isCompleted ? (
+        <div className="bg-green-50 border-b border-green-100 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" className="shrink-0"><polyline points="20 6 9 17 4 12" /></svg>
+            <p className="text-sm text-green-700">확인 완료된 의뢰입니다.</p>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="bg-blue-50 border-b border-blue-100 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" className="shrink-0">
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <p className="text-sm text-blue-700">청소자가 작업을 완료했습니다. 결과를 확인해주세요.</p>
+          </div>
+        </div>
+      )}
 
       <section className="bg-white mt-2 p-4">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold text-gray-900">의뢰 정보</h2>
-          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">확인 대기</span>
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isCompleted ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+            {isCompleted ? '완료' : '확인 대기'}
+          </span>
         </div>
         <div className="grid grid-cols-2 gap-1.5 text-sm">
           <span className="text-gray-500">청소 종류</span>
@@ -213,14 +220,18 @@ export default function ClientReview() {
             <span className="text-lg font-bold text-green-600">{payout.toLocaleString('ko-KR')}원</span>
           </div>
         </div>
-        <p className="text-xs text-gray-400 mt-2 text-center">확인을 누르시면 정산이 진행됩니다</p>
+        <p className="text-xs text-gray-400 mt-2 text-center">
+          {isCompleted ? '정산이 완료되었습니다' : '확인을 누르시면 정산이 진행됩니다'}
+        </p>
       </section>
 
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 max-w-[480px] mx-auto z-50">
-        <button onClick={handleConfirm} className="w-full py-4 bg-green-500 text-white font-bold rounded-xl text-base active:bg-green-600 transition-colors">
-          청소 결과 확인 완료
-        </button>
-      </div>
+      {!isCompleted && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 max-w-[480px] mx-auto z-50">
+          <button onClick={handleConfirm} className="w-full py-4 bg-green-500 text-white font-bold rounded-xl text-base active:bg-green-600 transition-colors">
+            청소 결과 확인 완료
+          </button>
+        </div>
+      )}
 
       {lightbox && (
         <PhotoLightbox photos={lightbox.photos} initialIndex={lightbox.index} onClose={() => setLightbox(null)} />
