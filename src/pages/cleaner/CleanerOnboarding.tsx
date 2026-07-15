@@ -4,14 +4,10 @@ const SLIDES = [
   {
     illustration: (
       <svg width="180" height="180" viewBox="0 0 180 180" fill="none">
-        {/* 연한 파란 원 배경 */}
         <circle cx="90" cy="90" r="70" fill="#DBEAFE" />
-        {/* 반짝이 아이콘 */}
         <path d="M90 40l8 24a4 4 0 003 3l24 8-24 8a4 4 0 00-3 3l-8 24-8-24a4 4 0 00-3-3l-24-8 24-8a4 4 0 003-3l8-24z" fill="#F59E0B" stroke="#1E293B" strokeWidth="2" />
-        {/* 작은 반짝이 */}
         <path d="M130 50l3 9 9 3-9 3-3 9-3-9-9-3 9-3 3-9z" fill="#3B82F6" />
         <path d="M50 120l3 9 9 3-9 3-3 9-3-9-9-3 9-3 3-9z" fill="#3B82F6" />
-        {/* 손 + 걸레 */}
         <rect x="65" y="95" width="50" height="30" rx="6" fill="#86EFAC" stroke="#1E293B" strokeWidth="2" />
         <rect x="75" y="85" width="30" height="15" rx="4" fill="#FBBF24" stroke="#1E293B" strokeWidth="2" />
       </svg>
@@ -23,14 +19,11 @@ const SLIDES = [
     illustration: (
       <svg width="180" height="180" viewBox="0 0 180 180" fill="none">
         <circle cx="90" cy="90" r="70" fill="#DBEAFE" />
-        {/* 스마트폰 */}
         <rect x="70" y="50" width="45" height="80" rx="8" fill="#FBBF24" stroke="#1E293B" strokeWidth="2" />
         <rect x="76" y="60" width="33" height="50" rx="2" fill="white" />
         <circle cx="92.5" cy="120" r="3" fill="#1E293B" />
-        {/* 알림 표시 */}
-        <circle cx="108" y="55" r="10" fill="#EF4444" stroke="#1E293B" strokeWidth="2" />
+        <circle cx="108" cy="55" r="10" fill="#EF4444" stroke="#1E293B" strokeWidth="2" />
         <text x="108" y="59" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">!</text>
-        {/* 위치 점선 */}
         <path d="M40 90 C50 70, 60 80, 70 75" stroke="#1E293B" strokeWidth="2" strokeDasharray="4 4" />
         <circle cx="38" cy="90" r="4" fill="white" stroke="#1E293B" strokeWidth="2" />
       </svg>
@@ -42,17 +35,13 @@ const SLIDES = [
     illustration: (
       <svg width="180" height="180" viewBox="0 0 180 180" fill="none">
         <circle cx="90" cy="90" r="70" fill="#DBEAFE" />
-        {/* 방패 */}
         <path d="M90 45c-25 5-40 10-40 10v35c0 25 17 40 40 50 23-10 40-25 40-50V55s-15-5-40-10z" fill="white" stroke="#1E293B" strokeWidth="2" />
-        {/* 방패 내부 4분할 */}
         <path d="M90 55v75M55 85h70" stroke="#1E293B" strokeWidth="1.5" />
         <rect x="60" y="60" width="25" height="22" fill="#1E293B" rx="2" />
         <rect x="95" y="60" width="25" height="22" fill="#3B82F6" rx="2" />
         <rect x="60" y="88" width="25" height="22" fill="#3B82F6" rx="2" />
         <rect x="95" y="88" width="25" height="22" fill="#1E293B" rx="2" />
-        {/* 중앙 별 */}
         <path d="M90 78l4 8 8 2-6 6 1 9-7-4-7 4 1-9-6-6 8-2 4-8z" fill="#FBBF24" />
-        {/* 반짝이 */}
         <path d="M135 55l3 9 9 3-9 3-3 9-3-9-9-3 9-3 3-9z" fill="#3B82F6" />
         <path d="M45 120l2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6z" fill="#3B82F6" />
       </svg>
@@ -64,9 +53,7 @@ const SLIDES = [
     illustration: (
       <svg width="180" height="180" viewBox="0 0 180 180" fill="none">
         <circle cx="90" cy="90" r="70" fill="#DBEAFE" />
-        {/* 체크리스트 */}
         <rect x="55" y="45" width="70" height="90" rx="8" fill="white" stroke="#1E293B" strokeWidth="2" />
-        {/* 체크 항목들 */}
         <rect x="65" y="60" width="14" height="14" rx="3" fill="#22C55E" stroke="#1E293B" strokeWidth="1.5" />
         <path d="M68 67l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         <rect x="85" y="63" width="30" height="6" rx="3" fill="#E5E7EB" />
@@ -75,7 +62,6 @@ const SLIDES = [
         <rect x="85" y="85" width="25" height="6" rx="3" fill="#E5E7EB" />
         <rect x="65" y="104" width="14" height="14" rx="3" fill="#FBBF24" stroke="#1E293B" strokeWidth="1.5" />
         <rect x="85" y="107" width="28" height="6" rx="3" fill="#E5E7EB" />
-        {/* 반짝이 */}
         <path d="M130 60l3 9 9 3-9 3-3 9-3-9-9-3 9-3 3-9z" fill="#3B82F6" />
         <path d="M45 75l2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6z" fill="#3B82F6" />
       </svg>
@@ -113,13 +99,6 @@ export default function CleanerOnboarding({ onComplete }: { onComplete: () => vo
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col max-w-[480px] mx-auto">
-      {/* 다시 안보기 */}
-      <div className="flex justify-end px-4 pt-4">
-        <button onClick={handleSkip} className="text-xs text-gray-400 py-1 px-2">
-          다시 안보기
-        </button>
-      </div>
-
       {/* 일러스트 + 텍스트 */}
       <div className="flex-1 flex flex-col items-center justify-center px-8">
         <div className="mb-10">
@@ -153,6 +132,14 @@ export default function CleanerOnboarding({ onComplete }: { onComplete: () => vo
           className="w-full py-4 bg-blue-500 text-white font-bold text-base rounded-2xl active:bg-blue-600 transition-colors"
         >
           {isLast ? '시작하기' : '다음'}
+        </button>
+
+        {/* 다시 안보기 */}
+        <button
+          onClick={handleSkip}
+          className="w-full py-3 mt-2 text-sm text-gray-400 font-medium"
+        >
+          다시 안보기
         </button>
       </div>
     </div>
