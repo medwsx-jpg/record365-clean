@@ -13,7 +13,7 @@ export default function MatchWaiting() {
     setRequest(api.getRequestById(id));
   }, [id]);
 
-  // Poll for status changes (cleaner accepts → in_progress)
+  // Poll for any status change from pending
   useEffect(() => {
     if (!id) return;
 
@@ -21,7 +21,8 @@ export default function MatchWaiting() {
       const updated = api.getRequestById(id);
       if (updated) {
         setRequest(updated);
-        if (updated.status === 'in_progress') {
+        // pending이 아닌 다른 상태로 변하면 홈으로 이동
+        if (updated.status !== 'pending') {
           clearInterval(interval);
           navigate('/clean/client', { replace: true });
         }
@@ -47,40 +48,23 @@ export default function MatchWaiting() {
 
   return (
     <div className="min-h-screen bg-gray-50 max-w-[480px] mx-auto flex flex-col items-center justify-center px-6">
-      {/* Pulsing animation */}
       <div className="relative mb-8">
         <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center animate-pulse">
           <div className="w-16 h-16 rounded-full bg-green-200 flex items-center justify-center">
             <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
             </div>
           </div>
         </div>
-        {/* Spinning ring */}
         <div className="absolute inset-0 w-24 h-24 rounded-full border-4 border-transparent border-t-green-500 animate-spin" />
       </div>
 
-      {/* Message */}
-      <h2 className="text-lg font-bold text-gray-800 mb-2 text-center">
-        청소자 대기 중...
-      </h2>
-      <p className="text-sm text-gray-500 text-center mb-8">
-        청소자가 의뢰를 수락하면 알려드릴게요.
-      </p>
+      <h2 className="text-lg font-bold text-gray-800 mb-2 text-center">청소자 대기 중...</h2>
+      <p className="text-sm text-gray-500 text-center mb-8">청소자가 의뢰를 수락하면 알려드릴게요.</p>
 
-      {/* Request summary */}
       <div className="w-full bg-white rounded-xl p-4 border border-gray-200 shadow-sm mb-8">
         <h3 className="text-sm font-semibold text-gray-700 mb-3">의뢰 정보</h3>
         <div className="grid grid-cols-2 gap-2 text-sm">
@@ -91,17 +75,11 @@ export default function MatchWaiting() {
           <span className="text-gray-500">주소</span>
           <span className="text-gray-800 truncate">{request.address}</span>
           <span className="text-gray-500">희망 가격</span>
-          <span className="text-green-600 font-bold">
-            {request.price.toLocaleString('ko-KR')}원
-          </span>
+          <span className="text-green-600 font-bold">{request.price.toLocaleString('ko-KR')}원</span>
         </div>
       </div>
 
-      {/* Cancel button */}
-      <button
-        onClick={handleCancel}
-        className="w-full border border-red-300 text-red-500 font-semibold py-3 rounded-xl hover:bg-red-50 transition-colors"
-      >
+      <button onClick={handleCancel} className="w-full border border-red-300 text-red-500 font-semibold py-3 rounded-xl hover:bg-red-50 transition-colors">
         의뢰 취소
       </button>
     </div>
