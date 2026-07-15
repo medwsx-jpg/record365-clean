@@ -34,6 +34,7 @@ export default function RequestDetail() {
   const zones = [...new Set(beforePhotos.map((p) => p.zone))];
   const zonePhotos = beforePhotos.filter((p) => p.zone === activeZone);
   const price = request.price;
+  const displayPrice = price - Math.round(price * 0.15);
 
   const openLightbox = (clickedIndex: number) => {
     setLightbox({
@@ -74,7 +75,7 @@ export default function RequestDetail() {
       <section className="bg-white mt-2 p-4">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-medium text-gray-700">{CATEGORY_LABELS[request.category]}</span>
-          <span className="text-lg font-bold text-green-600">{price.toLocaleString('ko-KR')}원</span>
+          <span className="text-lg font-bold text-green-600">{displayPrice.toLocaleString('ko-KR')}원</span>
         </div>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">

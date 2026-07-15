@@ -9,7 +9,8 @@ import CleanerSetup, { isSetupCompleted } from './CleanerSetup';
 type SortMode = 'newest' | 'price';
 
 function formatPrice(price: number): string {
-  return price.toLocaleString('ko-KR');
+  const payout = price - Math.round(price * 0.15);
+  return payout.toLocaleString('ko-KR');
 }
 
 function timeAgo(dateStr: string): string {
