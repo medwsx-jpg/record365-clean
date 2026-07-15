@@ -47,10 +47,30 @@ function StepIndicator({ current }: { current: number }) {
 }
 
 // ---------------------------------------------------------------------------
-// Category selector
+// Category selector (with image icons)
 // ---------------------------------------------------------------------------
 
 const ALL_CATEGORIES: CleaningCategory[] = ['home', 'office', 'store', 'move', 'appliance', 'other'];
+
+// 이미지가 있는 카테고리는 이미지 사용, 없으면 이모지 폴백
+const CATEGORY_IMAGE: Partial<Record<CleaningCategory, string>> = {
+  home: '/icon-home.png',
+  office: '/icon-office.png',
+  store: '/icon-store.png',
+  move: '/icon-move.png',
+  appliance: '/icon-appliance.png',
+};
+
+function CategoryIcon({ cat, size = 'normal' }: { cat: CleaningCategory; size?: 'normal' | 'small' }) {
+  const imgSrc = CATEGORY_IMAGE[cat];
+  const imgClass = size === 'small' ? 'w-5 h-5' : 'w-10 h-10';
+  const emojiClass = size === 'small' ? 'text-base' : 'text-2xl';
+
+  if (imgSrc) {
+    return <img src={imgSrc} alt={CATEGORY_LABELS[cat]} className={`${imgClass} object-contain`} />;
+  }
+  return <span className={emojiClass}>{CATEGORY_ICONS[cat]}</span>;
+}
 
 function CategorySelector({
   selected,
@@ -70,13 +90,13 @@ function CategorySelector({
             key={cat}
             type="button"
             onClick={() => onSelect(cat)}
-            className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border-2 transition-all text-sm ${
+            className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 transition-all text-sm ${
               selected === cat
                 ? 'border-green-500 bg-green-50 text-green-700 font-semibold'
                 : 'border-gray-200 bg-white text-gray-600 hover:border-green-300'
             }`}
           >
-            <span className="text-xl">{CATEGORY_ICONS[cat]}</span>
+            <CategoryIcon cat={cat} />
             <span>{CATEGORY_LABELS[cat]}</span>
           </button>
         ))}
@@ -226,7 +246,7 @@ function AreaInput({
   onChange: (v: number) => void;
   category: string;
 }) {
-  const label = category === 'office' ? '사무실 면적' : '업장 면적';
+  const label = category === 'office' ? '사무실 면적' : '매장 면적';
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
@@ -628,7 +648,6 @@ export default function CreateRequest() {
 
   const handleOtherSubsChange = (subs: string[]) => {
     setOtherSubs(subs);
-    // 서브옵션 변경 시 가격 자동 업데이트
     if (subs.length > 0) {
       const total = subs.reduce((sum, key) => sum + (OTHER_SUB_PRICES[key] || 50000), 0);
       setPrice(total);
@@ -663,7 +682,6 @@ export default function CreateRequest() {
     ? `방 ${spaceConfig.rooms} / 거실 ${spaceConfig.livingRooms} / 화장실 ${spaceConfig.bathrooms} / 주방 ${spaceConfig.kitchens} / 베란다 ${spaceConfig.verandas}`
     : '';
 
-  // 기타 서브옵션 라벨 생성
   const otherSubsLabel = otherSubs.map((key) => {
     if (key === 'other_custom') return otherCustomText || '기타';
     const opt = OTHER_SUB_OPTIONS.find((o) => o.key === key);
@@ -820,7 +838,10 @@ export default function CreateRequest() {
               <h3 className="font-semibold text-gray-800 text-sm">의뢰 요약</h3>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <span className="text-gray-500">청소 종류</span>
-                <span className="text-gray-800 font-medium">{category && `${CATEGORY_ICONS[category]} ${CATEGORY_LABELS[category]}`}</span>
+                <span className="text-gray-800 font-medium flex items-center gap-1.5">
+                  {category && <CategoryIcon cat={category} size="small" />}
+                  {category && CATEGORY_LABELS[category]}
+                </span>
                 {category === 'home' && (
                   <>
                     <span className="text-gray-500">공간 구성</span>

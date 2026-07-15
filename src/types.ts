@@ -15,7 +15,7 @@ export type CleaningCategory =
 export const CATEGORY_LABELS: Record<CleaningCategory, string> = {
   home: '집 청소',
   office: '사무실 청소',
-  store: '업장 청소',
+  store: '매장 청소',
   move: '입주/이사 청소',
   appliance: '가전 청소',
   other: '기타',
