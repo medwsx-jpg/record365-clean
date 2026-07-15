@@ -7,6 +7,7 @@ import RentalApp from './pages/rental/RentalApp';
 import RoleSelect from './pages/RoleSelect';
 import ClientHome from './pages/client/ClientHome';
 import CreateRequest from './pages/client/CreateRequest';
+import ClientFAQ from './pages/client/ClientFAQ';
 import MatchWaiting from './pages/client/MatchWaiting';
 import MatchComplete from './pages/client/MatchComplete';
 import CleanerHome from './pages/cleaner/CleanerHome';
@@ -55,6 +56,12 @@ function MyPage() {
         </div>
         <div className="bg-white rounded-xl shadow-sm border divide-y">
           <a href="/" className="block w-full text-left px-4 py-3.5 text-gray-700 text-sm">서비스 선택으로 돌아가기</a>
+          <a href="/clean/faq" className="block w-full text-left px-4 py-3.5 text-gray-700 text-sm flex items-center justify-between">
+            <span>자주 묻는 질문</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </a>
           <button className="w-full text-left px-4 py-3.5 text-gray-700 text-sm">알림 설정</button>
           <button className="w-full text-left px-4 py-3.5 text-gray-700 text-sm">이용 약관</button>
           <button className="w-full text-left px-4 py-3.5 text-gray-700 text-sm">고객센터</button>
@@ -115,6 +122,7 @@ export default function App() {
         <Route path="/clean/client/create" element={<RoleGuard role="client"><CreateRequest /></RoleGuard>} />
         <Route path="/clean/client/matching/:id" element={<RoleGuard role="client"><MatchWaiting /></RoleGuard>} />
         <Route path="/clean/client/matched/:id" element={<RoleGuard role="client"><MatchComplete /></RoleGuard>} />
+        <Route path="/clean/faq" element={<ClientFAQ />} />
         <Route path="/clean/cleaner" element={<RoleGuard role="cleaner"><CleanerHome /></RoleGuard>} />
         <Route path="/clean/cleaner/request/:id" element={<RoleGuard role="cleaner"><RequestDetail /></RoleGuard>} />
         <Route path="/clean/cleaner/progress/:id" element={<RoleGuard role="cleaner"><CleaningProgress /></RoleGuard>} />
