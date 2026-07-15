@@ -43,9 +43,7 @@ export default function BottomNav() {
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
         </svg>
       ),
-      path: '#',
-      disabled: true,
-      disabledLabel: '(준비중)',
+      path: '/clean/chat',
     },
     {
       label: '마이페이지',
@@ -91,9 +89,7 @@ export default function BottomNav() {
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
         </svg>
       ),
-      path: '#',
-      disabled: true,
-      disabledLabel: '(준비중)',
+      path: '/clean/chat',
     },
     {
       label: '마이페이지',

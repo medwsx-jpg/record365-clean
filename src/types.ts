@@ -128,3 +128,17 @@ export const AS_REASONS = [
 
 // 매칭 대기 시간 (시간 단위)
 export const MATCHING_TIMEOUT_HOURS = 24;
+
+// --- 채팅 관련 ---
+export type ChatMessageType = 'text' | 'image' | 'system';
+
+export interface ChatMessage {
+  id: string;
+  requestId: string;
+  senderRole: UserRole;
+  senderName: string;
+  content: string;
+  type: ChatMessageType;
+  createdAt: string;
+  read: boolean;
+}

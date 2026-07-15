@@ -1,9 +1,16 @@
-import type { UserRole, CleaningRequest, Cleaner, Review } from './types';
+import type { UserRole, CleaningRequest, Cleaner, Review, ChatMessage } from './types';
 
 const STORAGE_KEYS = {
   ROLE: 'cleanmatch_role',
   REQUESTS: 'cleanmatch_requests',
   REVIEWS: 'cleanmatch_reviews',
+  MESSAGES: 'cleanmatch_messages',
+  // 채팅
+  getMessages,
+  getAllMessages,
+  sendMessage,
+  markMessagesRead,
+  getUnreadCount,
 } as const;
 
 export const MOCK_CLEANERS: Cleaner[] = [
@@ -106,6 +113,61 @@ function getCleanerAverageRating(cleanerId: string): number {
   return Math.round((sum / reviews.length) * 10) / 10;
 }
 
+
+// --- 채팅 관련 ---
+function getMessages(requestId: string): ChatMessage[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.MESSAGES);
+    if (!raw) return [];
+    const all = JSON.parse(raw) as ChatMessage[];
+    return all.filter((m) => m.requestId === requestId);
+  } catch {
+    return [];
+  }
+}
+
+function getAllMessages(): ChatMessage[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.MESSAGES);
+    if (!raw) return [];
+    return JSON.parse(raw) as ChatMessage[];
+  } catch {
+    return [];
+  }
+}
+
+function sendMessage(msg: Omit<ChatMessage, 'id' | 'createdAt' | 'read'>): ChatMessage {
+  const all = getAllMessages();
+  const newMsg: ChatMessage = {
+    ...msg,
+    id: generateId(),
+    createdAt: new Date().toISOString(),
+    read: false,
+  };
+  all.push(newMsg);
+  localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(all));
+  return newMsg;
+}
+
+function markMessagesRead(requestId: string, readerRole: UserRole): void {
+  const all = getAllMessages();
+  let changed = false;
+  all.forEach((m) => {
+    if (m.requestId === requestId && m.senderRole !== readerRole && !m.read) {
+      m.read = true;
+      changed = true;
+    }
+  });
+  if (changed) {
+    localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(all));
+  }
+}
+
+function getUnreadCount(requestId: string, readerRole: UserRole): number {
+  const msgs = getMessages(requestId);
+  return msgs.filter((m) => m.senderRole !== readerRole && !m.read).length;
+}
+
 export const api = {
   getRole,
   setRole,
@@ -123,6 +185,12 @@ export const api = {
   getReviewByRequestId,
   saveReview,
   getCleanerAverageRating,
+  // 채팅
+  getMessages,
+  getAllMessages,
+  sendMessage,
+  markMessagesRead,
+  getUnreadCount,
 } as const;
 
 export default api;
