@@ -18,6 +18,7 @@ import CleanerHome from './pages/cleaner/CleanerHome';
 import RequestDetail from './pages/cleaner/RequestDetail';
 import CleaningProgress from './pages/cleaner/CleaningProgress';
 import CleaningComplete from './pages/cleaner/CleaningComplete';
+import CleanerProfile from './pages/cleaner/CleanerProfile';
 
 // ---------------------------------------------------------------------------
 // Guard: redirect to role select if no role is set
@@ -206,6 +207,7 @@ export default function App() {
         <Route path="/clean/cleaner/request/:id" element={<RoleGuard role="cleaner"><RequestDetail /></RoleGuard>} />
         <Route path="/clean/cleaner/progress/:id" element={<RoleGuard role="cleaner"><CleaningProgress /></RoleGuard>} />
         <Route path="/clean/cleaner/complete/:id" element={<RoleGuard role="cleaner"><CleaningComplete /></RoleGuard>} />
+        <Route path="/clean/cleaner/profile" element={<RoleGuard role="cleaner"><CleanerProfile /></RoleGuard>} />
         <Route path="/clean/mypage" element={<MyPage />} />
 
         {/* Catch-all */}

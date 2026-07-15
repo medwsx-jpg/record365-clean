@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { CleaningRequest, Photo, CleaningCategory } from '../../types';
 import { CATEGORY_LABELS, CATEGORY_ICONS } from '../../types';
@@ -80,6 +80,224 @@ function CategorySelector({
             <span>{CATEGORY_LABELS[cat]}</span>
           </button>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Space composition selector (for home cleaning)
+// ---------------------------------------------------------------------------
+
+interface SpaceConfig {
+  rooms: number;
+  livingRooms: number;
+  bathrooms: number;
+  kitchens: number;
+  verandas: number;
+}
+
+const SPACE_ITEMS: { key: keyof SpaceConfig; label: string; icon: string; max: number }[] = [
+  { key: 'rooms', label: '방', icon: '🛏️', max: 6 },
+  { key: 'livingRooms', label: '거실', icon: '🛋️', max: 3 },
+  { key: 'bathrooms', label: '화장실', icon: '🚿', max: 4 },
+  { key: 'kitchens', label: '주방', icon: '🍳', max: 2 },
+  { key: 'verandas', label: '베란다', icon: '🌿', max: 3 },
+];
+
+// 가격 기준 (원)
+const PRICE_PER = {
+  rooms: 15000,
+  livingRooms: 20000,
+  bathrooms: 18000,
+  kitchens: 15000,
+  verandas: 10000,
+  base: 30000, // 기본료
+};
+
+// 카테고리별 기본 가격
+const CATEGORY_BASE_PRICE: Record<CleaningCategory, number> = {
+  home: 0, // 공간 구성으로 계산
+  office: 150000,
+  store: 120000,
+  move: 200000,
+  appliance: 50000,
+  other: 100000,
+};
+
+function SpaceSelector({
+  config,
+  onChange,
+}: {
+  config: SpaceConfig;
+  onChange: (config: SpaceConfig) => void;
+}) {
+  const adjust = (key: keyof SpaceConfig, delta: number) => {
+    const item = SPACE_ITEMS.find((s) => s.key === key)!;
+    const next = Math.max(0, Math.min(item.max, config[key] + delta));
+    onChange({ ...config, [key]: next });
+  };
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        공간 구성
+      </label>
+      <div className="space-y-2">
+        {SPACE_ITEMS.map(({ key, label, icon }) => (
+          <div
+            key={key}
+            className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-4 py-3"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-lg">{icon}</span>
+              <span className="text-sm font-medium text-gray-700">{label}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => adjust(key, -1)}
+                disabled={config[key] === 0}
+                className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 disabled:text-gray-200 disabled:border-gray-200 active:bg-gray-100"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </button>
+              <span className="w-6 text-center text-sm font-bold text-gray-800">
+                {config[key]}
+              </span>
+              <button
+                type="button"
+                onClick={() => adjust(key, 1)}
+                className="w-8 h-8 rounded-full border border-green-400 flex items-center justify-center text-green-500 active:bg-green-50"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Price guide
+// ---------------------------------------------------------------------------
+
+function PriceGuide({
+  category,
+  spaceConfig,
+  price,
+  onPriceChange,
+}: {
+  category: CleaningCategory;
+  spaceConfig: SpaceConfig;
+  price: number;
+  onPriceChange: (price: number) => void;
+}) {
+  const guidePrice = useMemo(() => {
+    if (category === 'home') {
+      return (
+        PRICE_PER.base +
+        spaceConfig.rooms * PRICE_PER.rooms +
+        spaceConfig.livingRooms * PRICE_PER.livingRooms +
+        spaceConfig.bathrooms * PRICE_PER.bathrooms +
+        spaceConfig.kitchens * PRICE_PER.kitchens +
+        spaceConfig.verandas * PRICE_PER.verandas
+      );
+    }
+    return CATEGORY_BASE_PRICE[category];
+  }, [category, spaceConfig]);
+
+  const diff = price - guidePrice;
+  const diffLabel =
+    diff > 0
+      ? `가이드보다 +${diff.toLocaleString('ko-KR')}원`
+      : diff < 0
+      ? `가이드보다 ${diff.toLocaleString('ko-KR')}원`
+      : '가이드 금액과 동일';
+
+  const adjust = (amount: number) => {
+    const next = Math.max(10000, price + amount);
+    onPriceChange(next);
+  };
+
+  const useGuide = () => onPriceChange(guidePrice);
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        희망 가격
+      </label>
+
+      {/* 가이드 금액 표시 */}
+      <div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs text-green-600 font-medium">예상 가이드 금액</p>
+            <p className="text-lg font-bold text-green-700">
+              {guidePrice.toLocaleString('ko-KR')}원
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={useGuide}
+            className="px-3 py-1.5 bg-green-500 text-white text-xs font-medium rounded-lg active:bg-green-600"
+          >
+            이 금액으로
+          </button>
+        </div>
+        {category === 'home' && (
+          <p className="text-[11px] text-green-500 mt-1">
+            기본료 {PRICE_PER.base.toLocaleString()}원 + 공간 구성 기반 산출
+          </p>
+        )}
+      </div>
+
+      {/* 금액 조정 */}
+      <div className="bg-white border border-gray-200 rounded-xl p-4">
+        <div className="flex items-center justify-center gap-4 mb-2">
+          <button
+            type="button"
+            onClick={() => adjust(-10000)}
+            className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-500 active:bg-gray-100 text-lg font-bold"
+          >
+            -
+          </button>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-gray-900">
+              {price.toLocaleString('ko-KR')}
+            </p>
+            <p className="text-xs text-gray-400">원</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => adjust(10000)}
+            className="w-10 h-10 rounded-full border-2 border-green-400 flex items-center justify-center text-green-500 active:bg-green-50 text-lg font-bold"
+          >
+            +
+          </button>
+        </div>
+        <p className={`text-center text-xs ${diff < 0 ? 'text-red-400' : diff > 0 ? 'text-blue-500' : 'text-gray-400'}`}>
+          {diffLabel}
+        </p>
+        <div className="flex justify-center gap-2 mt-2">
+          {[-30000, -10000, 10000, 30000].map((amt) => (
+            <button
+              key={amt}
+              type="button"
+              onClick={() => adjust(amt)}
+              className="px-2.5 py-1 text-xs rounded-lg border border-gray-200 text-gray-500 active:bg-gray-100"
+            >
+              {amt > 0 ? '+' : ''}{(amt / 10000).toFixed(0)}만
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -223,20 +441,73 @@ export default function CreateRequest() {
   const [step, setStep] = useState(0);
 
   const [category, setCategory] = useState<CleaningCategory | null>(null);
+  const [spaceConfig, setSpaceConfig] = useState<SpaceConfig>({
+    rooms: 2,
+    livingRooms: 1,
+    bathrooms: 1,
+    kitchens: 1,
+    verandas: 1,
+  });
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [address, setAddress] = useState('');
-  const [price, setPrice] = useState('');
+  const [addressDetail, setAddressDetail] = useState('');
+  const [price, setPrice] = useState(0);
   const [notes, setNotes] = useState('');
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [priceInitialized, setPriceInitialized] = useState(false);
 
-  const priceNum = parseInt(price.replace(/[^0-9]/g, ''), 10) || 0;
-  const step1Valid = category && date && time && address && priceNum > 0;
-
-  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/[^0-9]/g, '');
-    setPrice(raw);
+  // 카테고리 선택 시 가이드 금액으로 초기화
+  const handleCategorySelect = (cat: CleaningCategory) => {
+    setCategory(cat);
+    if (!priceInitialized) {
+      if (cat === 'home') {
+        const guide =
+          PRICE_PER.base +
+          spaceConfig.rooms * PRICE_PER.rooms +
+          spaceConfig.livingRooms * PRICE_PER.livingRooms +
+          spaceConfig.bathrooms * PRICE_PER.bathrooms +
+          spaceConfig.kitchens * PRICE_PER.kitchens +
+          spaceConfig.verandas * PRICE_PER.verandas;
+        setPrice(guide);
+      } else {
+        setPrice(CATEGORY_BASE_PRICE[cat]);
+      }
+      setPriceInitialized(true);
+    }
   };
+
+  // 공간 구성 변경 시 가격도 자동 업데이트 (수동 조정 전까지)
+  const handleSpaceChange = (config: SpaceConfig) => {
+    setSpaceConfig(config);
+    if (category === 'home') {
+      const guide =
+        PRICE_PER.base +
+        config.rooms * PRICE_PER.rooms +
+        config.livingRooms * PRICE_PER.livingRooms +
+        config.bathrooms * PRICE_PER.bathrooms +
+        config.kitchens * PRICE_PER.kitchens +
+        config.verandas * PRICE_PER.verandas;
+      setPrice(guide);
+    }
+  };
+
+  const spaceLabel = category === 'home'
+    ? `방 ${spaceConfig.rooms} / 거실 ${spaceConfig.livingRooms} / 화장실 ${spaceConfig.bathrooms} / 주방 ${spaceConfig.kitchens} / 베란다 ${spaceConfig.verandas}`
+    : '';
+
+  const openAddressSearch = () => {
+    const daum = (window as any).daum;
+    if (!daum?.Postcode) return;
+    new daum.Postcode({
+      oncomplete: (data: any) => {
+        setAddress(data.roadAddress || data.jibunAddress);
+      },
+    }).open();
+  };
+
+  const fullAddress = addressDetail ? `${address} ${addressDetail}` : address;
+  const step1Valid = category && date && time && address && price > 0;
 
   const handleSubmit = () => {
     if (!category) return;
@@ -246,9 +517,9 @@ export default function CreateRequest() {
       category,
       date,
       time,
-      address,
-      price: priceNum,
-      notes,
+      address: fullAddress,
+      price,
+      notes: category === 'home' ? `[공간] ${spaceLabel}\n${notes}`.trim() : notes,
       photos,
       status: 'matching',
       createdAt: new Date().toISOString(),
@@ -273,7 +544,13 @@ export default function CreateRequest() {
       <div className="px-4 pb-8">
         {step === 0 && (
           <div className="space-y-4">
-            <CategorySelector selected={category} onSelect={setCategory} />
+            <CategorySelector selected={category} onSelect={handleCategorySelect} />
+
+            {/* 집 청소일 때 공간 구성 */}
+            {category === 'home' && (
+              <SpaceSelector config={spaceConfig} onChange={handleSpaceChange} />
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">날짜 선택</label>
               <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" />
@@ -284,15 +561,44 @@ export default function CreateRequest() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">주소 입력</label>
-              <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="예: 서울시 강남구 역삼동 123-45" className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">희망 가격</label>
-              <div className="relative">
-                <input type="text" inputMode="numeric" value={priceNum > 0 ? priceNum.toLocaleString('ko-KR') : ''} onChange={handlePriceChange} placeholder="50,000" className="w-full border border-gray-300 rounded-lg px-3 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">원</span>
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={address}
+                  readOnly
+                  placeholder="주소를 검색하세요"
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-gray-50 cursor-pointer"
+                  onClick={openAddressSearch}
+                />
+                <button
+                  type="button"
+                  onClick={openAddressSearch}
+                  className="px-4 py-2.5 bg-green-500 text-white text-sm font-medium rounded-lg whitespace-nowrap active:bg-green-600"
+                >
+                  검색
+                </button>
               </div>
+              {address && (
+                <input
+                  type="text"
+                  value={addressDetail}
+                  onChange={(e) => setAddressDetail(e.target.value)}
+                  placeholder="상세 주소 입력 (동/호수)"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              )}
             </div>
+
+            {/* 가격 가이드 */}
+            {category && (
+              <PriceGuide
+                category={category}
+                spaceConfig={spaceConfig}
+                price={price}
+                onPriceChange={setPrice}
+              />
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">추가 요청사항</label>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="청소 시 참고할 사항을 적어주세요" rows={3} className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none" />
@@ -319,14 +625,20 @@ export default function CreateRequest() {
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <span className="text-gray-500">청소 종류</span>
                 <span className="text-gray-800 font-medium">{category && `${CATEGORY_ICONS[category]} ${CATEGORY_LABELS[category]}`}</span>
+                {category === 'home' && (
+                  <>
+                    <span className="text-gray-500">공간 구성</span>
+                    <span className="text-gray-800 font-medium text-xs">{spaceLabel}</span>
+                  </>
+                )}
                 <span className="text-gray-500">날짜</span>
                 <span className="text-gray-800 font-medium">{date}</span>
                 <span className="text-gray-500">시간</span>
                 <span className="text-gray-800 font-medium">{time}</span>
                 <span className="text-gray-500">주소</span>
-                <span className="text-gray-800 font-medium col-span-1 truncate">{address}</span>
+                <span className="text-gray-800 font-medium col-span-1 truncate">{fullAddress}</span>
                 <span className="text-gray-500">희망 가격</span>
-                <span className="text-green-600 font-bold">{priceNum.toLocaleString('ko-KR')}원</span>
+                <span className="text-green-600 font-bold">{price.toLocaleString('ko-KR')}원</span>
               </div>
               {notes && (
                 <div>

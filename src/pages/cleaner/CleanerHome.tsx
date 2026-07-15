@@ -47,6 +47,25 @@ export default function CleanerHome() {
         <h1 className="text-lg font-bold text-gray-900">주변 의뢰</h1>
       </header>
 
+      {/* 프로필 미등록 알림 */}
+      {!localStorage.getItem('cleanmatch_cleaner_profile') && (
+        <button
+          onClick={() => navigate('/clean/cleaner/profile')}
+          className="mx-4 mt-3 bg-orange-50 border border-orange-200 rounded-xl p-3 flex items-center gap-3 text-left w-[calc(100%-2rem)]"
+        >
+          <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 shrink-0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-orange-700">프로필을 등록해주세요</p>
+            <p className="text-xs text-orange-500">의뢰를 수락하려면 프로필 등록이 필요합니다</p>
+          </div>
+        </button>
+      )}
+
       {/* Pull-to-refresh hint */}
       <p className="text-center text-xs text-gray-400 py-2" onClick={loadRequests}>
         아래로 당겨 새로고침
