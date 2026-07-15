@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { CleaningRequest } from '../../types';
-import { getZoneLabel } from '../../types';
+import { getZoneLabel, CATEGORY_LABELS } from '../../types';
 import { api } from '../../store';
 
 type ViewMode = 'side' | 'before' | 'after';
 
-export default function CleaningComplete() {
+export default function ClientReview() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [request, setRequest] = useState<CleaningRequest | null>(null);
-  const [activeZone, setActiveZone] = useState<string>('sink');
+  const [activeZone, setActiveZone] = useState<string>('');
   const [viewMode, setViewMode] = useState<ViewMode>('side');
+  const [confirmed, setConfirmed] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -42,12 +43,36 @@ export default function CleaningComplete() {
   const fee = Math.round(price * 0.15);
   const payout = price - fee;
 
-  const handleSubmit = () => {
-    // 의뢰자 확인 대기 상태로 변경
-    api.updateRequest(request.id, { status: 'waiting_confirm' });
-    alert('완료 보고가 제출되었습니다.\n의뢰자의 확인을 기다려주세요.');
-    navigate('/clean/cleaner');
+  const handleConfirm = () => {
+    api.updateRequest(request.id, { status: 'completed' });
+    setConfirmed(true);
   };
+
+  if (confirmed) {
+    return (
+      <div className="min-h-screen bg-gray-50 max-w-[480px] mx-auto flex flex-col items-center justify-center px-6">
+        <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-4">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+        <h2 className="text-xl font-bold text-gray-800 mb-2">확인 완료!</h2>
+        <p className="text-sm text-gray-500 text-center mb-2">청소가 정상적으로 완료되었습니다.</p>
+        <div className="bg-green-50 rounded-xl p-4 w-full mb-6 text-center">
+          <p className="text-xs text-green-600 mb-1">청소자 정산 금액</p>
+          <p className="text-2xl font-bold text-green-700">{payout.toLocaleString('ko-KR')}원</p>
+          <p className="text-xs text-gray-400 mt-1">수수료 {fee.toLocaleString('ko-KR')}원 차감</p>
+        </div>
+        <p className="text-xs text-gray-400 mb-8">이용해주셔서 감사합니다.</p>
+        <button
+          onClick={() => navigate('/clean/client')}
+          className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3.5 rounded-xl transition-colors"
+        >
+          홈으로
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 max-w-[480px] mx-auto pb-24">
@@ -58,14 +83,39 @@ export default function CleaningComplete() {
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <h1 className="text-lg font-bold text-gray-900">청소 완료</h1>
+        <h1 className="text-lg font-bold text-gray-900">청소 결과 확인</h1>
       </header>
 
-      {/* Before/After Comparison Section */}
+      {/* Status Banner */}
+      <div className="bg-blue-50 border-b border-blue-100 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" className="shrink-0">
+            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <p className="text-sm text-blue-700">청소자가 작업을 완료했습니다. 결과를 확인해주세요.</p>
+        </div>
+      </div>
+
+      {/* Request Info */}
+      <section className="bg-white mt-2 p-4">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm font-semibold text-gray-900">의뢰 정보</h2>
+          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">확인 대기</span>
+        </div>
+        <div className="grid grid-cols-2 gap-1.5 text-sm">
+          <span className="text-gray-500">청소 종류</span>
+          <span className="text-gray-800 font-medium">{CATEGORY_LABELS[request.category]}</span>
+          <span className="text-gray-500">날짜</span>
+          <span className="text-gray-800">{request.date} {request.time}</span>
+          <span className="text-gray-500">청소자</span>
+          <span className="text-gray-800 font-medium">{request.cleanerName || '-'}</span>
+        </div>
+      </section>
+
+      {/* Before/After Comparison */}
       <section className="bg-white mt-2 py-4">
-        <h2 className="px-4 text-sm font-semibold text-gray-900 mb-3">
-          Before / After 비교
-        </h2>
+        <h2 className="px-4 text-sm font-semibold text-gray-900 mb-1">Before / After 비교</h2>
+        <p className="px-4 text-xs text-gray-400 mb-3">구역별로 청소 전후를 비교해보세요</p>
 
         {/* Zone Tabs */}
         {zones.length > 0 && (
@@ -73,6 +123,8 @@ export default function CleaningComplete() {
             <div className="flex gap-1 min-w-max py-1">
               {zones.map((zone) => {
                 const isActive = zone === activeZone;
+                const bCount = beforePhotos.filter((p) => p.zone === zone).length;
+                const aCount = afterPhotos.filter((p) => p.zone === zone).length;
                 return (
                   <button
                     key={zone}
@@ -84,6 +136,9 @@ export default function CleaningComplete() {
                     }`}
                   >
                     {getZoneLabel(zone)}
+                    <span className={`ml-1 text-xs ${isActive ? 'text-green-100' : 'text-gray-400'}`}>
+                      ({aCount}/{bCount})
+                    </span>
                   </button>
                 );
               })}
@@ -93,30 +148,17 @@ export default function CleaningComplete() {
 
         {/* View Mode Toggle */}
         <div className="flex gap-1 px-4 mt-3 mb-3">
-          <button
-            onClick={() => setViewMode('side')}
-            className={`flex-1 py-1.5 text-xs rounded-full font-medium transition-colors ${
-              viewMode === 'side' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
-            }`}
-          >
-            나란히 보기
-          </button>
-          <button
-            onClick={() => setViewMode('before')}
-            className={`flex-1 py-1.5 text-xs rounded-full font-medium transition-colors ${
-              viewMode === 'before' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
-            }`}
-          >
-            Before
-          </button>
-          <button
-            onClick={() => setViewMode('after')}
-            className={`flex-1 py-1.5 text-xs rounded-full font-medium transition-colors ${
-              viewMode === 'after' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
-            }`}
-          >
-            After
-          </button>
+          {(['side', 'before', 'after'] as ViewMode[]).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setViewMode(mode)}
+              className={`flex-1 py-1.5 text-xs rounded-full font-medium transition-colors ${
+                viewMode === mode ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
+              }`}
+            >
+              {mode === 'side' ? '나란히 보기' : mode === 'before' ? 'Before' : 'After'}
+            </button>
+          ))}
         </div>
 
         {/* Photo Comparison */}
@@ -154,7 +196,7 @@ export default function CleaningComplete() {
             <div className="grid grid-cols-2 gap-2">
               {(viewMode === 'before' ? currentBeforePhotos : currentAfterPhotos).map((photo) => (
                 <div key={photo.id} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200">
-                  <img src={photo.dataUrl} alt={viewMode === 'before' ? 'Before' : 'After'} className="w-full h-full object-cover" />
+                  <img src={photo.dataUrl} alt={viewMode} className="w-full h-full object-cover" />
                   <div className={`absolute top-1 left-1 text-white text-[10px] px-1.5 py-0.5 rounded ${viewMode === 'before' ? 'bg-black/50' : 'bg-green-500/80'}`}>
                     {viewMode === 'before' ? 'Before' : 'After'}
                   </div>
@@ -170,7 +212,7 @@ export default function CleaningComplete() {
 
       {/* Settlement Info */}
       <section className="bg-white mt-2 p-4">
-        <h2 className="text-sm font-semibold text-gray-900 mb-3">정산 정보</h2>
+        <h2 className="text-sm font-semibold text-gray-900 mb-3">결제 정보</h2>
         <div className="space-y-3 bg-gray-50 rounded-xl p-4">
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600">의뢰 금액</span>
@@ -178,23 +220,23 @@ export default function CleaningComplete() {
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600">수수료 (15%)</span>
-            <span className="text-sm font-medium text-red-500">-{fee.toLocaleString('ko-KR')}원</span>
+            <span className="text-sm font-medium text-gray-400">-{fee.toLocaleString('ko-KR')}원</span>
           </div>
           <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
-            <span className="text-sm font-semibold text-gray-900">정산 예정 금액</span>
+            <span className="text-sm font-semibold text-gray-900">청소자 정산 금액</span>
             <span className="text-lg font-bold text-green-600">{payout.toLocaleString('ko-KR')}원</span>
           </div>
         </div>
-        <p className="text-xs text-gray-400 mt-2 text-center">의뢰자 확인 후 정산이 진행됩니다</p>
+        <p className="text-xs text-gray-400 mt-2 text-center">확인을 누르시면 정산이 진행됩니다</p>
       </section>
 
-      {/* Submit Button */}
+      {/* Confirm Button */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 max-w-[480px] mx-auto z-50">
         <button
-          onClick={handleSubmit}
+          onClick={handleConfirm}
           className="w-full py-4 bg-green-500 text-white font-bold rounded-xl text-base active:bg-green-600 transition-colors"
         >
-          완료 제출
+          청소 결과 확인 완료
         </button>
       </div>
     </div>

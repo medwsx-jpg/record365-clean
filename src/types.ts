@@ -1,6 +1,6 @@
 export type UserRole = 'client' | 'cleaner';
 
-export type RequestStatus = 'pending' | 'matching' | 'matched' | 'in_progress' | 'completed';
+export type RequestStatus = 'pending' | 'matching' | 'matched' | 'in_progress' | 'waiting_confirm' | 'completed';
 
 export type CleaningZone = 'sink' | 'bathroom' | 'living' | 'kitchen' | 'bedroom' | 'other';
 

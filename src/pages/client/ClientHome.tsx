@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { CleaningRequest, RequestStatus } from '../../types';
+import { CATEGORY_LABELS } from '../../types';
 import { api } from '../../store';
 import BottomNav from '../../components/BottomNav';
 
@@ -11,7 +12,8 @@ const STATUS_CONFIG: Record<
   pending: { label: '대기중', bg: 'bg-gray-100', text: 'text-gray-600' },
   matching: { label: '매칭중', bg: 'bg-yellow-100', text: 'text-yellow-700' },
   matched: { label: '매칭완료', bg: 'bg-green-100', text: 'text-green-700' },
-  in_progress: { label: '진행중', bg: 'bg-blue-100', text: 'text-blue-700' },
+  in_progress: { label: '청소 진행중', bg: 'bg-blue-100', text: 'text-blue-700' },
+  waiting_confirm: { label: '확인 대기', bg: 'bg-orange-100', text: 'text-orange-700' },
   completed: { label: '완료', bg: 'bg-gray-100', text: 'text-gray-500' },
 };
 
@@ -36,10 +38,15 @@ export default function ClientHome() {
 
   useEffect(() => {
     setRequests(api.getRequests());
+    // 주기적으로 상태 변경 감지 (청소자가 완료 제출했을 때)
+    const interval = setInterval(() => {
+      setRequests(api.getRequests());
+    }, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const active = requests.filter((r) =>
-    ['pending', 'matching', 'matched', 'in_progress'].includes(r.status),
+    ['pending', 'matching', 'matched', 'in_progress', 'waiting_confirm'].includes(r.status),
   );
   const completed = requests.filter((r) => r.status === 'completed');
 
@@ -48,6 +55,10 @@ export default function ClientHome() {
       navigate(`/clean/client/matching/${req.id}`);
     } else if (req.status === 'matched') {
       navigate(`/clean/client/matched/${req.id}`);
+    } else if (req.status === 'waiting_confirm') {
+      navigate(`/clean/client/review/${req.id}`);
+    } else if (req.status === 'completed') {
+      navigate(`/clean/client/review/${req.id}`);
     }
   };
 
@@ -92,7 +103,7 @@ export default function ClientHome() {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <span className="text-sm font-medium text-gray-800">
-                      {req.date} {req.time}
+                      {CATEGORY_LABELS[req.category]} · {req.date}
                     </span>
                     <StatusBadge status={req.status} />
                   </div>
@@ -100,6 +111,23 @@ export default function ClientHome() {
                   <p className="text-sm font-semibold text-green-600 mt-1">
                     {formatPrice(req.price)}
                   </p>
+                  {req.status === 'waiting_confirm' && (
+                    <div className="mt-2 bg-orange-50 rounded-lg px-3 py-2 flex items-center gap-2">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2.5" className="shrink-0">
+                        <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                      </svg>
+                      <span className="text-xs text-orange-700 font-medium">청소가 완료되었습니다. 결과를 확인해주세요!</span>
+                    </div>
+                  )}
+                  {req.status === 'in_progress' && (
+                    <div className="mt-2 flex items-center gap-1.5">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                      <span className="text-xs text-blue-600">청소자가 작업 중입니다</span>
+                    </div>
+                  )}
+                  {req.cleanerName && req.status !== 'matching' && (
+                    <p className="text-xs text-gray-400 mt-1">청소자: {req.cleanerName}</p>
+                  )}
                 </button>
               ))}
             </div>
@@ -118,13 +146,14 @@ export default function ClientHome() {
           ) : (
             <div className="space-y-3">
               {completed.map((req) => (
-                <div
+                <button
                   key={req.id}
-                  className="bg-white rounded-xl p-4 shadow-sm border border-gray-100"
+                  onClick={() => handleCardClick(req)}
+                  className="w-full bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-left active:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <span className="text-sm font-medium text-gray-800">
-                      {req.date} {req.time}
+                      {CATEGORY_LABELS[req.category]} · {req.date}
                     </span>
                     <StatusBadge status={req.status} />
                   </div>
@@ -138,7 +167,10 @@ export default function ClientHome() {
                       <span>/ 완료 사진 {req.afterPhotos.length}장</span>
                     )}
                   </div>
-                </div>
+                  {req.cleanerName && (
+                    <p className="text-xs text-gray-400 mt-1">청소자: {req.cleanerName}</p>
+                  )}
+                </button>
               ))}
             </div>
           )}

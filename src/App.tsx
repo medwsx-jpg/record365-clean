@@ -9,6 +9,7 @@ import RoleSelect from './pages/RoleSelect';
 import ClientHome from './pages/client/ClientHome';
 import CreateRequest from './pages/client/CreateRequest';
 import ClientFAQ from './pages/client/ClientFAQ';
+import ClientReview from './pages/client/ClientReview';
 import MatchWaiting from './pages/client/MatchWaiting';
 import MatchComplete from './pages/client/MatchComplete';
 import CleanerHome from './pages/cleaner/CleanerHome';
@@ -126,7 +127,6 @@ function CleanerMyPage() {
           </div>
         </div>
 
-        {/* 등급 진행 바 */}
         {nextGrade && (
           <div className="mt-4">
             <div className="flex items-center justify-between mb-1">
@@ -140,7 +140,6 @@ function CleanerMyPage() {
           </div>
         )}
 
-        {/* 수수료 할인 */}
         {grade.feeDiscount > 0 && (
           <div className="mt-3 bg-green-50 rounded-lg p-2 text-center">
             <span className="text-xs font-bold text-green-700">수수료 {grade.feeDiscount}% 할인 적용 중</span>
@@ -152,36 +151,28 @@ function CleanerMyPage() {
       <div className="bg-white rounded-xl shadow-sm border divide-y">
         <a href="/clean/cleaner/profile" className="flex items-center justify-between px-4 py-3.5 text-gray-700 text-sm">
           <div className="flex items-center gap-3">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
-            </svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
             <span>프로필 수정</span>
           </div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><polyline points="9 18 15 12 9 6" /></svg>
         </a>
         <a href="/clean/cleaner/training" className="flex items-center justify-between px-4 py-3.5 text-gray-700 text-sm">
           <div className="flex items-center gap-3">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
-              <polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-            </svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" /></svg>
             <span>교육 영상</span>
           </div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><polyline points="9 18 15 12 9 6" /></svg>
         </a>
         <a href="/clean/cleaner/guide" className="flex items-center justify-between px-4 py-3.5 text-gray-700 text-sm">
           <div className="flex items-center gap-3">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
-            </svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
             <span>준비물 / 가이드</span>
           </div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><polyline points="9 18 15 12 9 6" /></svg>
         </a>
         <a href="/clean/faq" className="flex items-center justify-between px-4 py-3.5 text-gray-700 text-sm">
           <div className="flex items-center gap-3">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
-              <circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" />
-            </svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
             <span>자주 묻는 질문</span>
           </div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><polyline points="9 18 15 12 9 6" /></svg>
@@ -287,6 +278,7 @@ export default function App() {
         <Route path="/clean/client/create" element={<RoleGuard role="client"><CreateRequest /></RoleGuard>} />
         <Route path="/clean/client/matching/:id" element={<RoleGuard role="client"><MatchWaiting /></RoleGuard>} />
         <Route path="/clean/client/matched/:id" element={<RoleGuard role="client"><MatchComplete /></RoleGuard>} />
+        <Route path="/clean/client/review/:id" element={<RoleGuard role="client"><ClientReview /></RoleGuard>} />
         <Route path="/clean/faq" element={<ClientFAQ />} />
         <Route path="/clean/cleaner" element={<RoleGuard role="cleaner"><CleanerHome /></RoleGuard>} />
         <Route path="/clean/cleaner/request/:id" element={<RoleGuard role="cleaner"><RequestDetail /></RoleGuard>} />
