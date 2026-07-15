@@ -25,6 +25,9 @@ import CleanerGuide from './pages/cleaner/CleanerGuide';
 import ChatList from './pages/chat/ChatList';
 import ChatRoom from './pages/chat/ChatRoom';
 import NotificationCenter from './pages/NotificationCenter';
+import Terms from './pages/Terms';
+import RecurringReservation from './pages/client/RecurringReservation';
+import CleaningHistory from './pages/client/CleaningHistory';
 import ClientProfileEdit from './pages/client/ClientProfile';
 
 function RoleGuard({ children, role }: { children: React.ReactNode; role: 'client' | 'cleaner' }) {
@@ -79,7 +82,15 @@ function ClientMyPage() {
           <span>자주 묻는 질문</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><polyline points="9 18 15 12 9 6" /></svg>
         </a>
-        <button className="w-full text-left px-4 py-3.5 text-gray-700 text-sm">이용 약관</button>
+        <a href="/clean/history" className="flex items-center justify-between px-4 py-3.5 text-gray-700 text-sm">
+          <div className="flex items-center gap-3"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="8" y1="8" x2="16" y2="8" /><line x1="8" y1="12" x2="16" y2="12" /><line x1="8" y1="16" x2="12" y2="16" /></svg><span>의뢰 이력</span></div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><polyline points="9 18 15 12 9 6" /></svg>
+        </a>
+        <a href="/clean/client/recurring" className="flex items-center justify-between px-4 py-3.5 text-gray-700 text-sm">
+          <div className="flex items-center gap-3"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" /></svg><span>정기 청소 예약</span></div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><polyline points="9 18 15 12 9 6" /></svg>
+        </a>
+        <a href="/clean/terms" className="block w-full text-left px-4 py-3.5 text-gray-700 text-sm">이용 약관</a>
         <button className="w-full text-left px-4 py-3.5 text-gray-700 text-sm">고객센터</button>
       </div>
       <button onClick={handleReset} className="w-full bg-red-50 text-red-500 rounded-xl py-3 text-sm font-medium border border-red-100">역할 초기화 (데이터 삭제)</button>
@@ -182,7 +193,15 @@ function CleanerMyPage() {
       </div>
       <div className="bg-white rounded-xl shadow-sm border divide-y">
         <a href="/" className="block w-full text-left px-4 py-3.5 text-gray-700 text-sm">서비스 선택으로 돌아가기</a>
-        <button className="w-full text-left px-4 py-3.5 text-gray-700 text-sm">이용 약관</button>
+        <a href="/clean/history" className="flex items-center justify-between px-4 py-3.5 text-gray-700 text-sm">
+          <div className="flex items-center gap-3"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="8" y1="8" x2="16" y2="8" /><line x1="8" y1="12" x2="16" y2="12" /><line x1="8" y1="16" x2="12" y2="16" /></svg><span>의뢰 이력</span></div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><polyline points="9 18 15 12 9 6" /></svg>
+        </a>
+        <a href="/clean/client/recurring" className="flex items-center justify-between px-4 py-3.5 text-gray-700 text-sm">
+          <div className="flex items-center gap-3"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" /></svg><span>정기 청소 예약</span></div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><polyline points="9 18 15 12 9 6" /></svg>
+        </a>
+        <a href="/clean/terms" className="block w-full text-left px-4 py-3.5 text-gray-700 text-sm">이용 약관</a>
         <button className="w-full text-left px-4 py-3.5 text-gray-700 text-sm">고객센터</button>
       </div>
       <button onClick={handleReset} className="w-full bg-red-50 text-red-500 rounded-xl py-3 text-sm font-medium border border-red-100">역할 초기화 (데이터 삭제)</button>
@@ -274,6 +293,9 @@ export default function App() {
         <Route path="/clean/chat" element={<ChatList />} />
         <Route path="/clean/chat/:id" element={<ChatRoom />} />
         <Route path="/clean/notifications" element={<NotificationCenter />} />
+        <Route path="/clean/terms" element={<Terms />} />
+        <Route path="/clean/client/recurring" element={<RoleGuard role="client"><RecurringReservation /></RoleGuard>} />
+        <Route path="/clean/history" element={<CleaningHistory />} />
         <Route path="/clean/mypage" element={<MyPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

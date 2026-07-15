@@ -155,3 +155,19 @@ export interface AppNotification {
   read: boolean;
   createdAt: string;
 }
+
+// --- 정기 청소 관련 ---
+export interface RecurringSchedule {
+  id: string;
+  category: CleaningCategory;
+  address: string;
+  price: number;
+  notes: string;
+  days: number[]; // 0=일, 1=월, ..., 6=토
+  time: string;
+  frequency: 'weekly' | 'biweekly'; // 매주 / 격주
+  startDate: string;
+  endDate?: string;
+  active: boolean;
+  createdAt: string;
+}

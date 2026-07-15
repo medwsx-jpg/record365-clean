@@ -1,4 +1,4 @@
-import type { UserRole, CleaningRequest, Cleaner, Review, ChatMessage, AppNotification } from './types';
+import type { UserRole, CleaningRequest, Cleaner, Review, ChatMessage, AppNotification, RecurringSchedule } from './types';
 
 const STORAGE_KEYS = {
   ROLE: 'cleanmatch_role',
@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
   MESSAGES: 'cleanmatch_messages',
   NOTIFICATIONS: 'cleanmatch_notifications',
   CLIENT_PROFILE: 'cleanmatch_client_profile',
+  RECURRING: 'cleanmatch_recurring',
 } as const;
 
 export const MOCK_CLEANERS: Cleaner[] = [
@@ -165,6 +166,45 @@ function getUnreadCount(requestId: string, readerRole: UserRole): number {
 }
 
 
+
+// --- 정기 청소 관련 ---
+function getRecurringSchedules(): RecurringSchedule[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.RECURRING);
+    if (!raw) return [];
+    return JSON.parse(raw) as RecurringSchedule[];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecurringSchedule(schedule: Omit<RecurringSchedule, 'id' | 'createdAt' | 'active'>): RecurringSchedule {
+  const all = getRecurringSchedules();
+  const newS: RecurringSchedule = {
+    ...schedule,
+    id: generateId(),
+    active: true,
+    createdAt: new Date().toISOString(),
+  };
+  all.push(newS);
+  localStorage.setItem(STORAGE_KEYS.RECURRING, JSON.stringify(all));
+  return newS;
+}
+
+function updateRecurringSchedule(id: string, updates: Partial<RecurringSchedule>): void {
+  const all = getRecurringSchedules();
+  const idx = all.findIndex((s) => s.id === id);
+  if (idx !== -1) {
+    all[idx] = { ...all[idx], ...updates };
+    localStorage.setItem(STORAGE_KEYS.RECURRING, JSON.stringify(all));
+  }
+}
+
+function deleteRecurringSchedule(id: string): void {
+  const all = getRecurringSchedules().filter((s) => s.id !== id);
+  localStorage.setItem(STORAGE_KEYS.RECURRING, JSON.stringify(all));
+}
+
 // --- 알림 관련 ---
 function getNotifications(): AppNotification[] {
   try {
@@ -263,6 +303,11 @@ export const api = {
   // 의뢰인 프로필
   getClientProfile,
   saveClientProfile,
+  // 정기 청소
+  getRecurringSchedules,
+  saveRecurringSchedule,
+  updateRecurringSchedule,
+  deleteRecurringSchedule,
 } as const;
 
 export default api;
