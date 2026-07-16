@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { api } from './store';
 import { getGradeByJobs, getNextGrade, getProgressToNextGrade } from './utils/gradeSystem';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import LoginPage from './pages/LoginPage';
 
 import ServiceSelect from './pages/ServiceSelect';
 import RentalApp from './pages/rental/RentalApp';
@@ -43,13 +45,19 @@ function CleanRootRedirect() { return <RoleSelect />; }
 // 의뢰자 마이페이지
 // ---------------------------------------------------------------------------
 function ClientMyPage() {
+  const [profile, setProfile] = useState<{ name?: string; photo?: string } | null>(null);
+  useEffect(() => {
+    (async () => {
+      const p = await api.getClientProfile();
+      setProfile(p);
+    })();
+  }, []);
   const handleReset = () => {
     sessionStorage.removeItem('cleanmatch_role');
     localStorage.removeItem('cleanmatch_requests');
     localStorage.removeItem('cleanmatch_reviews');
     window.location.href = '/clean';
   };
-  const profile = api.getClientProfile();
   const displayName = profile?.name || '의뢰자';
   const displayInitial = displayName.charAt(0);
 
@@ -94,7 +102,23 @@ function ClientMyPage() {
         <button className="w-full text-left px-4 py-3.5 text-gray-700 text-sm">고객센터</button>
       </div>
       <button onClick={handleReset} className="w-full bg-red-50 text-red-500 rounded-xl py-3 text-sm font-medium border border-red-100">역할 초기화 (데이터 삭제)</button>
+      <LogoutButton />
     </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 로그아웃 버튼
+// ---------------------------------------------------------------------------
+function LogoutButton() {
+  const { signOut } = useAuth();
+  const handleLogout = async () => {
+    sessionStorage.removeItem('cleanmatch_role');
+    await signOut();
+    window.location.href = '/';
+  };
+  return (
+    <button onClick={handleLogout} className="w-full bg-gray-100 text-gray-600 rounded-xl py-3 text-sm font-medium border border-gray-200">로그아웃</button>
   );
 }
 
@@ -111,8 +135,16 @@ function CleanerMyPage() {
   const expLabels: Record<string, string> = { beginner: '입문 (1년 미만)', junior: '초급 (1~3년)', mid: '중급 (3~5년)', senior: '고급 (5년 이상)', expert: '전문가 (10년 이상)' };
 
   // 내 리뷰 평점
-  const myRating = api.getCleanerAverageRating('self');
-  const myReviews = api.getReviewsByCleanerId('self');
+  const [myRating, setMyRating] = useState(0);
+  const [myReviews, setMyReviews] = useState<any[]>([]);
+  useEffect(() => {
+    (async () => {
+      const rating = await api.getCleanerAverageRating('self');
+      const reviews = await api.getReviewsByCleanerId('self');
+      setMyRating(rating);
+      setMyReviews(reviews);
+    })();
+  }, []);
 
   const handleReset = () => {
     sessionStorage.removeItem('cleanmatch_role'); localStorage.removeItem('cleanmatch_requests');
@@ -205,6 +237,7 @@ function CleanerMyPage() {
         <button className="w-full text-left px-4 py-3.5 text-gray-700 text-sm">고객센터</button>
       </div>
       <button onClick={handleReset} className="w-full bg-red-50 text-red-500 rounded-xl py-3 text-sm font-medium border border-red-100">역할 초기화 (데이터 삭제)</button>
+      <LogoutButton />
     </>
   );
 }
@@ -266,12 +299,30 @@ function BottomNavInline() {
   );
 }
 
+function AuthGuard({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-8 h-8 border-3 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm text-gray-400">로딩중...</p>
+        </div>
+      </div>
+    );
+  }
+  if (!user) return <LoginPage />;
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
+    <AuthProvider>
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<ServiceSelect />} />
-        <Route path="/rental" element={<RentalApp />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/" element={<AuthGuard><ServiceSelect /></AuthGuard>} />
+        <Route path="/rental" element={<AuthGuard><RentalApp /></AuthGuard>} />
         <Route path="/clean" element={<CleanRootRedirect />} />
         <Route path="/clean/client" element={<RoleGuard role="client"><ClientHome /></RoleGuard>} />
         <Route path="/clean/client/create" element={<RoleGuard role="client"><CreateRequest /></RoleGuard>} />
@@ -300,5 +351,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+    </AuthProvider>
   );
 }
