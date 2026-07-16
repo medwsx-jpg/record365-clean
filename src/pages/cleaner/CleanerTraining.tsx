@@ -66,7 +66,7 @@ export function isTrainingCompleted(): boolean {
   return TRAINING_MODULES.every((m) => state[m.id] === true);
 }
 
-// 슬라이드 뷰어 모달
+// 슬라이드 뷰어 모달 (모바일 최적화: 풀폭 + 스와이프)
 function SlideViewer({
   module,
   onComplete,
@@ -78,6 +78,7 @@ function SlideViewer({
 }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [maxViewed, setMaxViewed] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
   const total = module.slideCount;
   const canComplete = maxViewed >= total - 1;
 
@@ -93,12 +94,24 @@ function SlideViewer({
     if (currentSlide > 0) setCurrentSlide(currentSlide - 1);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStart === null) return;
+    const diff = touchStart - e.changedTouches[0].clientX;
+    if (diff > 50) goNext();
+    else if (diff < -50) goPrev();
+    setTouchStart(null);
+  };
+
   const padNum = (n: number) => String(n).padStart(2, '0');
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex flex-col">
+    <div className="fixed inset-0 bg-black z-50 flex flex-col">
       {/* 상단 바 */}
-      <div className="flex items-center justify-between px-4 py-3 bg-black/50">
+      <div className="flex items-center justify-between px-4 py-3 bg-black/70 shrink-0">
         <button onClick={onClose} className="text-white/80 text-sm">
           ✕ 닫기
         </button>
@@ -106,55 +119,73 @@ function SlideViewer({
         <span className="text-white/60 text-xs">{currentSlide + 1} / {total}</span>
       </div>
 
-      {/* 슬라이드 이미지 영역 */}
-      <div className="flex-1 flex items-center justify-center relative px-2">
+      {/* 슬라이드 이미지 영역 — 풀폭 + 세로 스크롤 */}
+      <div
+        className="flex-1 overflow-y-auto relative"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <img
           src={`${module.slidePath}/slide-${padNum(currentSlide + 1)}.jpg`}
           alt={`슬라이드 ${currentSlide + 1}`}
-          className="max-w-full max-h-full object-contain rounded-lg"
+          className="w-full block"
         />
 
-        {/* 이전 버튼 */}
+        {/* 이전 영역 (좌측 탭) */}
         {currentSlide > 0 && (
           <button
             onClick={goPrev}
-            className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 rounded-full flex items-center justify-center text-white active:bg-black/60"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </button>
+            className="absolute left-0 top-0 w-1/4 h-full opacity-0"
+            aria-label="이전 슬라이드"
+          />
         )}
 
-        {/* 다음 버튼 */}
+        {/* 다음 영역 (우측 탭) */}
         {currentSlide < total - 1 && (
           <button
             onClick={goNext}
-            className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 rounded-full flex items-center justify-center text-white active:bg-black/60"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </button>
+            className="absolute right-0 top-0 w-1/4 h-full opacity-0"
+            aria-label="다음 슬라이드"
+          />
         )}
       </div>
 
-      {/* 하단 진행 바 + 완료 버튼 */}
-      <div className="px-4 py-3 bg-black/50">
-        {/* 슬라이드 인디케이터 */}
-        <div className="flex gap-1 justify-center mb-3">
-          {Array.from({ length: total }, (_, i) => (
-            <div
-              key={i}
-              className={`h-1 rounded-full transition-all ${
-                i === currentSlide
-                  ? 'w-6 bg-green-400'
-                  : i <= maxViewed
-                  ? 'w-2 bg-green-400/50'
-                  : 'w-2 bg-white/20'
-              }`}
-            />
-          ))}
+      {/* 하단 네비게이션 */}
+      <div className="px-4 py-3 bg-black/70 shrink-0">
+        {/* 좌우 버튼 + 인디케이터 */}
+        <div className="flex items-center gap-2 mb-3">
+          <button
+            onClick={goPrev}
+            disabled={currentSlide === 0}
+            className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white disabled:opacity-20 shrink-0"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          <div className="flex gap-1 justify-center flex-1 flex-wrap">
+            {Array.from({ length: total }, (_, i) => (
+              <div
+                key={i}
+                className={`h-1 rounded-full transition-all ${
+                  i === currentSlide
+                    ? 'w-5 bg-green-400'
+                    : i <= maxViewed
+                    ? 'w-1.5 bg-green-400/50'
+                    : 'w-1.5 bg-white/20'
+                }`}
+              />
+            ))}
+          </div>
+          <button
+            onClick={goNext}
+            disabled={currentSlide >= total - 1}
+            className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white disabled:opacity-20 shrink-0"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
         </div>
 
         {canComplete ? (
@@ -166,7 +197,7 @@ function SlideViewer({
           </button>
         ) : (
           <p className="text-center text-white/50 text-xs py-2">
-            모든 슬라이드를 끝까지 확인하면 이수 완료할 수 있습니다 ({maxViewed + 1}/{total} 확인됨)
+            모든 슬라이드를 확인하면 이수 완료할 수 있습니다 ({maxViewed + 1}/{total})
           </p>
         )}
       </div>
