@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '../../components/BottomNav';
 
@@ -66,7 +66,7 @@ export function isTrainingCompleted(): boolean {
   return TRAINING_MODULES.every((m) => state[m.id] === true);
 }
 
-// 슬라이드 뷰어 모달 (강제 가로 모드: 90도 회전)
+// 슬라이드 뷰어 모달 (모바일: 90도 회전, PC: 일반 가로뷰)
 function SlideViewer({
   module,
   onComplete,
@@ -79,8 +79,15 @@ function SlideViewer({
   const [currentSlide, setCurrentSlide] = useState(0);
   const [maxViewed, setMaxViewed] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const total = module.slideCount;
   const canComplete = maxViewed >= total - 1;
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const goNext = () => {
     if (currentSlide < total - 1) {
@@ -94,6 +101,7 @@ function SlideViewer({
     if (currentSlide > 0) setCurrentSlide(currentSlide - 1);
   };
 
+  // 모바일: Y축 스와이프 (90도 회전이므로)
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.touches[0].clientY);
   };
@@ -106,19 +114,42 @@ function SlideViewer({
     setTouchStart(null);
   };
 
+  // PC: 키보드 좌우 화살표
+  useEffect(() => {
+    if (isMobile) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') goNext();
+      else if (e.key === 'ArrowLeft') goPrev();
+      else if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  });
+
   const padNum = (n: number) => String(n).padStart(2, '0');
+
+  // 모바일: 90도 회전 강제 가로모드
+  const mobileStyle: React.CSSProperties = {
+    top: 0,
+    left: '100%',
+    width: '100vh',
+    height: '100vw',
+    transformOrigin: 'top left',
+    transform: 'rotate(90deg)',
+  };
+
+  // PC: 일반 전체화면
+  const pcStyle: React.CSSProperties = {
+    top: 0,
+    left: 0,
+    width: '100vw',
+    height: '100vh',
+  };
 
   return (
     <div
       className="fixed bg-black z-50 flex flex-col"
-      style={{
-        top: 0,
-        left: '100%',
-        width: '100vh',
-        height: '100vw',
-        transformOrigin: 'top left',
-        transform: 'rotate(90deg)',
-      }}
+      style={isMobile ? mobileStyle : pcStyle}
     >
       {/* 상단 바 */}
       <div className="flex items-center justify-between px-4 py-2 bg-black/70 shrink-0">
@@ -132,8 +163,8 @@ function SlideViewer({
       {/* 슬라이드 이미지 영역 */}
       <div
         className="flex-1 flex items-center justify-center relative overflow-hidden"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
+        onTouchStart={isMobile ? handleTouchStart : undefined}
+        onTouchEnd={isMobile ? handleTouchEnd : undefined}
       >
         <img
           src={`${module.slidePath}/slide-${padNum(currentSlide + 1)}.jpg`}
@@ -141,17 +172,39 @@ function SlideViewer({
           className="w-full h-full object-contain"
         />
 
-        {/* 이전 영역 (좌측 탭) */}
-        {currentSlide > 0 && (
+        {/* PC: 좌우 화살표 버튼 */}
+        {!isMobile && currentSlide > 0 && (
+          <button
+            onClick={goPrev}
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/40 hover:bg-black/60 rounded-full flex items-center justify-center text-white transition-colors"
+            aria-label="이전 슬라이드"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+        )}
+        {!isMobile && currentSlide < total - 1 && (
+          <button
+            onClick={goNext}
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/40 hover:bg-black/60 rounded-full flex items-center justify-center text-white transition-colors"
+            aria-label="다음 슬라이드"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        )}
+
+        {/* 모바일: 투명 탭 영역 */}
+        {isMobile && currentSlide > 0 && (
           <button
             onClick={goPrev}
             className="absolute left-0 top-0 w-1/4 h-full opacity-0"
             aria-label="이전 슬라이드"
           />
         )}
-
-        {/* 다음 영역 (우측 탭) */}
-        {currentSlide < total - 1 && (
+        {isMobile && currentSlide < total - 1 && (
           <button
             onClick={goNext}
             className="absolute right-0 top-0 w-1/4 h-full opacity-0"
