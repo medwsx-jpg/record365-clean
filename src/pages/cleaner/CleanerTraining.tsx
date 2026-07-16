@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '../../components/BottomNav';
 
@@ -7,7 +7,8 @@ interface TrainingModule {
   title: string;
   description: string;
   duration: string;
-  videoUrl: string;
+  slideCount: number;
+  slidePath: string;
   completed: boolean;
 }
 
@@ -17,28 +18,32 @@ const TRAINING_MODULES: Omit<TrainingModule, 'completed'>[] = [
     title: '기본 청소 매뉴얼',
     description: '슥싹 매칭 서비스의 기본 청소 절차와 고객 응대 방법을 배웁니다.',
     duration: '15분',
-    videoUrl: '',
+    slideCount: 12,
+    slidePath: '/training/basic',
   },
   {
     id: 'safety',
     title: '안전 및 위생 교육',
     description: '청소 시 안전 수칙과 위생 관리 방법을 학습합니다.',
     duration: '10분',
-    videoUrl: '',
+    slideCount: 12,
+    slidePath: '/training/safety',
   },
   {
     id: 'tools',
     title: '청소 도구 사용법',
     description: '각 청소 도구의 올바른 사용법과 관리 방법을 배웁니다.',
     duration: '12분',
-    videoUrl: '',
+    slideCount: 0,
+    slidePath: '/training/tools',
   },
   {
     id: 'service',
     title: '서비스 이용 가이드',
     description: '앱 사용법, 의뢰 수락, 완료 보고 등 서비스 이용 방법을 안내합니다.',
     duration: '8분',
-    videoUrl: '',
+    slideCount: 0,
+    slidePath: '/training/service',
   },
 ];
 
@@ -61,8 +66,8 @@ export function isTrainingCompleted(): boolean {
   return TRAINING_MODULES.every((m) => state[m.id] === true);
 }
 
-// 영상 시청 모달
-function VideoPlayer({
+// 슬라이드 뷰어 모달
+function SlideViewer({
   module,
   onComplete,
   onClose,
@@ -71,74 +76,99 @@ function VideoPlayer({
   onComplete: () => void;
   onClose: () => void;
 }) {
-  const [progress, setProgress] = useState(0);
-  const [canComplete, setCanComplete] = useState(false);
-  const intervalRef = useRef<number | null>(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [maxViewed, setMaxViewed] = useState(0);
+  const total = module.slideCount;
+  const canComplete = maxViewed >= total - 1;
 
-  useEffect(() => {
-    // 데모: 10초 후 완료 가능 (실제로는 영상 길이에 맞춤)
-    intervalRef.current = window.setInterval(() => {
-      setProgress((prev) => {
-        const next = Math.min(prev + 10, 100);
-        if (next >= 100) {
-          setCanComplete(true);
-          if (intervalRef.current) clearInterval(intervalRef.current);
-        }
-        return next;
-      });
-    }, 1000);
+  const goNext = () => {
+    if (currentSlide < total - 1) {
+      const next = currentSlide + 1;
+      setCurrentSlide(next);
+      setMaxViewed((prev) => Math.max(prev, next));
+    }
+  };
 
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, []);
+  const goPrev = () => {
+    if (currentSlide > 0) setCurrentSlide(currentSlide - 1);
+  };
+
+  const padNum = (n: number) => String(n).padStart(2, '0');
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-[440px] overflow-hidden">
-        {/* 영상 영역 (데모) */}
-        <div className="bg-gray-900 aspect-video flex items-center justify-center relative">
-          <div className="text-center text-white">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="white" className="mx-auto mb-2">
-              <polygon points="5 3 19 12 5 21 5 3" />
+    <div className="fixed inset-0 bg-black/80 z-50 flex flex-col">
+      {/* 상단 바 */}
+      <div className="flex items-center justify-between px-4 py-3 bg-black/50">
+        <button onClick={onClose} className="text-white/80 text-sm">
+          ✕ 닫기
+        </button>
+        <h3 className="text-white text-sm font-medium">{module.title}</h3>
+        <span className="text-white/60 text-xs">{currentSlide + 1} / {total}</span>
+      </div>
+
+      {/* 슬라이드 이미지 영역 */}
+      <div className="flex-1 flex items-center justify-center relative px-2">
+        <img
+          src={`${module.slidePath}/slide-${padNum(currentSlide + 1)}.jpg`}
+          alt={`슬라이드 ${currentSlide + 1}`}
+          className="max-w-full max-h-full object-contain rounded-lg"
+        />
+
+        {/* 이전 버튼 */}
+        {currentSlide > 0 && (
+          <button
+            onClick={goPrev}
+            className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 rounded-full flex items-center justify-center text-white active:bg-black/60"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
             </svg>
-            <p className="text-sm opacity-80">{module.title}</p>
-            <p className="text-xs opacity-50 mt-1">데모 영상 (10초)</p>
-          </div>
-          {/* 진행 바 */}
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-700">
+          </button>
+        )}
+
+        {/* 다음 버튼 */}
+        {currentSlide < total - 1 && (
+          <button
+            onClick={goNext}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 rounded-full flex items-center justify-center text-white active:bg-black/60"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        )}
+      </div>
+
+      {/* 하단 진행 바 + 완료 버튼 */}
+      <div className="px-4 py-3 bg-black/50">
+        {/* 슬라이드 인디케이터 */}
+        <div className="flex gap-1 justify-center mb-3">
+          {Array.from({ length: total }, (_, i) => (
             <div
-              className="h-full bg-green-500 transition-all duration-1000"
-              style={{ width: `${progress}%` }}
+              key={i}
+              className={`h-1 rounded-full transition-all ${
+                i === currentSlide
+                  ? 'w-6 bg-green-400'
+                  : i <= maxViewed
+                  ? 'w-2 bg-green-400/50'
+                  : 'w-2 bg-white/20'
+              }`}
             />
-          </div>
+          ))}
         </div>
 
-        <div className="p-4">
-          <h3 className="font-bold text-gray-800 mb-1">{module.title}</h3>
-          <p className="text-sm text-gray-500 mb-4">{module.description}</p>
-
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs text-gray-400">진행률: {progress}%</span>
-            <span className="text-xs text-gray-400">{module.duration}</span>
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={onClose}
-              className="flex-1 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-600 font-medium"
-            >
-              닫기
-            </button>
-            <button
-              onClick={onComplete}
-              disabled={!canComplete}
-              className="flex-1 py-2.5 bg-green-500 text-white rounded-xl text-sm font-medium disabled:bg-gray-300 disabled:text-gray-500"
-            >
-              {canComplete ? '시청 완료' : '영상을 끝까지 시청하세요'}
-            </button>
-          </div>
-        </div>
+        {canComplete ? (
+          <button
+            onClick={onComplete}
+            className="w-full py-3 bg-green-500 text-white font-semibold rounded-xl active:bg-green-600 transition-colors"
+          >
+            이수 완료
+          </button>
+        ) : (
+          <p className="text-center text-white/50 text-xs py-2">
+            모든 슬라이드를 끝까지 확인하면 이수 완료할 수 있습니다 ({maxViewed + 1}/{total} 확인됨)
+          </p>
+        )}
       </div>
     </div>
   );
@@ -206,11 +236,13 @@ export default function CleanerTraining() {
         {modules.map((mod, idx) => (
           <button
             key={mod.id}
-            onClick={() => !mod.completed && setPlayingModule(mod.id)}
+            onClick={() => !mod.completed && mod.slideCount > 0 && setPlayingModule(mod.id)}
             className={`w-full text-left bg-white rounded-xl border p-4 transition-colors ${
               mod.completed
                 ? 'border-green-200 bg-green-50/50'
-                : 'border-gray-200 active:bg-gray-50'
+                : mod.slideCount > 0
+                ? 'border-gray-200 active:bg-gray-50'
+                : 'border-gray-200 opacity-60'
             }`}
           >
             <div className="flex items-start gap-3">
@@ -233,11 +265,15 @@ export default function CleanerTraining() {
                   <span className="text-xs text-gray-400 shrink-0 ml-2">{mod.duration}</span>
                 </div>
                 <p className="text-xs text-gray-500 mt-0.5">{mod.description}</p>
-                {mod.completed && (
+                {mod.completed ? (
                   <span className="inline-block mt-1.5 text-[10px] text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
                     이수 완료
                   </span>
-                )}
+                ) : mod.slideCount === 0 ? (
+                  <span className="inline-block mt-1.5 text-[10px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                    준비 중
+                  </span>
+                ) : null}
               </div>
             </div>
           </button>
@@ -256,9 +292,9 @@ export default function CleanerTraining() {
         </div>
       )}
 
-      {/* 영상 플레이어 모달 */}
+      {/* 슬라이드 뷰어 모달 */}
       {playingModule && (
-        <VideoPlayer
+        <SlideViewer
           module={modules.find((m) => m.id === playingModule)!}
           onComplete={() => handleComplete(playingModule)}
           onClose={() => setPlayingModule(null)}
