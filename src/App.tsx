@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { api } from './store';
 import { getGradeByJobs, getNextGrade, getProgressToNextGrade } from './utils/gradeSystem';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import LoginPage from './pages/LoginPage';
 
 import ServiceSelect from './pages/ServiceSelect';
 import RentalApp from './pages/rental/RentalApp';
@@ -299,30 +298,13 @@ function BottomNavInline() {
   );
 }
 
-function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="w-8 h-8 border-3 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-sm text-gray-400">로딩중...</p>
-        </div>
-      </div>
-    );
-  }
-  if (!user) return <LoginPage />;
-  return <>{children}</>;
-}
-
 export default function App() {
   return (
     <AuthProvider>
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/" element={<AuthGuard><ServiceSelect /></AuthGuard>} />
-        <Route path="/rental" element={<AuthGuard><RentalApp /></AuthGuard>} />
+        <Route path="/" element={<ServiceSelect />} />
+        <Route path="/rental" element={<RentalApp />} />
         <Route path="/clean" element={<CleanRootRedirect />} />
         <Route path="/clean/client" element={<RoleGuard role="client"><ClientHome /></RoleGuard>} />
         <Route path="/clean/client/create" element={<RoleGuard role="client"><CreateRequest /></RoleGuard>} />

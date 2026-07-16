@@ -14,7 +14,7 @@ import {
   Timestamp,
   type Unsubscribe,
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, auth } from './firebase';
 import type {
   UserRole,
   CleaningRequest,
@@ -50,6 +50,11 @@ function docToRequest(id: string, data: Record<string, unknown>): CleaningReques
   } as CleaningRequest;
 }
 
+// --- 현재 사용자 UID ---
+export function getCurrentUserId(): string {
+  return auth.currentUser?.uid || 'anonymous';
+}
+
 // --- 역할 (sessionStorage 유지) ---
 export function getRole(): UserRole | null {
   const role = sessionStorage.getItem('cleanmatch_role');
@@ -63,7 +68,13 @@ export function setRole(role: UserRole): void {
 
 // --- 의뢰 CRUD ---
 export async function getRequests(): Promise<CleaningRequest[]> {
-  const snap = await getDocs(query(requestsCol, orderBy('createdAt', 'desc')));
+  const role = getRole();
+  const uid = getCurrentUserId();
+  // 의뢰인: 내 의뢰만, 청소자: 전체 의뢰
+  const q = role === 'client'
+    ? query(requestsCol, where('userId', '==', uid), orderBy('createdAt', 'desc'))
+    : query(requestsCol, orderBy('createdAt', 'desc'));
+  const snap = await getDocs(q);
   return snap.docs.map((d) => docToRequest(d.id, d.data() as Record<string, unknown>));
 }
 
@@ -74,8 +85,10 @@ export async function getRequestById(id: string): Promise<CleaningRequest | unde
 }
 
 export async function saveRequest(request: Omit<CleaningRequest, 'id'>): Promise<CleaningRequest> {
+  const uid = getCurrentUserId();
   const docRef = await addDoc(requestsCol, {
     ...request,
+    userId: uid,
     createdAt: serverTimestamp(),
   });
   return { ...request, id: docRef.id, createdAt: new Date().toISOString() } as CleaningRequest;
@@ -182,14 +195,16 @@ export function subscribeMessages(requestId: string, cb: (msgs: ChatMessage[]) =
 
 // --- 알림 ---
 export async function getNotifications(): Promise<AppNotification[]> {
-  const snap = await getDocs(query(notificationsCol, orderBy('createdAt', 'desc')));
+  const uid = getCurrentUserId();
+  const snap = await getDocs(query(notificationsCol, where('userId', '==', uid), orderBy('createdAt', 'desc')));
   return snap.docs.map((d) => ({ ...d.data(), id: d.id, createdAt: toISO(d.data().createdAt) }) as AppNotification);
 }
 
 export async function addNotification(
   n: Omit<AppNotification, 'id' | 'createdAt' | 'read'>
 ): Promise<AppNotification> {
-  const docRef = await addDoc(notificationsCol, { ...n, createdAt: serverTimestamp(), read: false });
+  const uid = getCurrentUserId();
+  const docRef = await addDoc(notificationsCol, { ...n, userId: uid, createdAt: serverTimestamp(), read: false });
   return { ...n, id: docRef.id, createdAt: new Date().toISOString(), read: false } as AppNotification;
 }
 
@@ -198,12 +213,14 @@ export async function markNotificationRead(id: string): Promise<void> {
 }
 
 export async function markAllNotificationsRead(): Promise<void> {
-  const snap = await getDocs(query(notificationsCol, where('read', '==', false)));
+  const uid = getCurrentUserId();
+  const snap = await getDocs(query(notificationsCol, where('userId', '==', uid), where('read', '==', false)));
   await Promise.all(snap.docs.map((d) => updateDoc(d.ref, { read: true })));
 }
 
 export async function getUnreadNotificationCount(): Promise<number> {
-  const snap = await getDocs(query(notificationsCol, where('read', '==', false)));
+  const uid = getCurrentUserId();
+  const snap = await getDocs(query(notificationsCol, where('userId', '==', uid), where('read', '==', false)));
   return snap.size;
 }
 
@@ -216,35 +233,36 @@ export interface ClientProfile {
 }
 
 export async function getClientProfile(userId?: string): Promise<ClientProfile | null> {
-  const id = userId || 'default';
+  const id = userId || getCurrentUserId();
   const snap = await getDoc(doc(db, 'clean_profiles', id));
   if (!snap.exists()) return null;
   return snap.data() as ClientProfile;
 }
 
 export async function saveClientProfile(profile: ClientProfile, userId?: string): Promise<void> {
-  const id = userId || 'default';
+  const id = userId || getCurrentUserId();
   const { setDoc } = await import('firebase/firestore');
   await setDoc(doc(db, 'clean_profiles', id), profile);
 }
 
 // --- 정기 청소 ---
 export async function getRecurringSchedules(): Promise<RecurringSchedule[]> {
-  const snap = await getDocs(query(recurringCol, orderBy('createdAt', 'desc')));
+  const uid = getCurrentUserId();
+  const snap = await getDocs(query(recurringCol, where('userId', '==', uid), orderBy('createdAt', 'desc')));
   return snap.docs.map((d) => ({ ...d.data(), id: d.id, createdAt: toISO(d.data().createdAt) }) as RecurringSchedule);
 }
 
 export async function saveRecurringSchedule(
   schedule: Omit<RecurringSchedule, 'id' | 'createdAt' | 'active'>
 ): Promise<RecurringSchedule> {
-  const docRef = await addDoc(recurringCol, { ...schedule, active: true, createdAt: serverTimestamp() });
+  const uid = getCurrentUserId();
+  const docRef = await addDoc(recurringCol, { ...schedule, userId: uid, active: true, createdAt: serverTimestamp() });
   return { ...schedule, id: docRef.id, active: true, createdAt: new Date().toISOString() } as RecurringSchedule;
 }
 
 export async function updateRecurringSchedule(id: string, updates: Partial<RecurringSchedule>): Promise<void> {
   await updateDoc(doc(db, 'clean_recurring', id), updates as Record<string, unknown>);
 }
-
 export async function deleteRecurringSchedule(id: string): Promise<void> {
   await deleteDoc(doc(db, 'clean_recurring', id));
 }
