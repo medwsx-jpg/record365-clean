@@ -31,62 +31,65 @@ export default function NotificationCenter() {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
-  const load = () => {
-    setNotifications(api.getNotifications());
+  const load = async () => {
+    const data = await api.getNotifications();
+    setNotifications(data);
   };
 
   useEffect(() => {
-    // 데모용: 알림이 없으면 샘플 알림 생성
-    const existing = api.getNotifications();
-    if (existing.length === 0) {
-      const requests = api.getRequests();
-      requests.forEach((req) => {
-        if (req.status === 'matched') {
-          api.addNotification({
-            type: 'matched',
-            title: '매칭 완료',
-            message: `${req.cleanerName || '청소자'}님이 의뢰를 수락했습니다.`,
-            requestId: req.id,
-          });
+    (async () => {
+      // 데모용: 알림이 없으면 샘플 알림 생성
+      const existing = await api.getNotifications();
+      if (existing.length === 0) {
+        const requests = await api.getRequests();
+        for (const req of requests) {
+          if (req.status === 'matched') {
+            await api.addNotification({
+              type: 'matched',
+              title: '매칭 완료',
+              message: `${req.cleanerName || '청소자'}님이 의뢰를 수락했습니다.`,
+              requestId: req.id,
+            });
+          }
+          if (req.status === 'waiting_confirm') {
+            await api.addNotification({
+              type: 'waiting_confirm',
+              title: '청소 완료 보고',
+              message: '청소가 완료되었습니다. 확인해주세요.',
+              requestId: req.id,
+            });
+          }
+          if (req.status === 'as_requested') {
+            await api.addNotification({
+              type: 'as_requested',
+              title: 'A/S 요청',
+              message: req.asComment || 'A/S 재방문이 요청되었습니다.',
+              requestId: req.id,
+            });
+          }
+          if (req.status === 'completed' && req.reviewId) {
+            await api.addNotification({
+              type: 'review',
+              title: '리뷰 등록',
+              message: '의뢰자가 리뷰를 남겼습니다.',
+              requestId: req.id,
+            });
+          }
         }
-        if (req.status === 'waiting_confirm') {
-          api.addNotification({
-            type: 'waiting_confirm',
-            title: '청소 완료 보고',
-            message: '청소가 완료되었습니다. 확인해주세요.',
-            requestId: req.id,
-          });
-        }
-        if (req.status === 'as_requested') {
-          api.addNotification({
-            type: 'as_requested',
-            title: 'A/S 요청',
-            message: req.asComment || 'A/S 재방문이 요청되었습니다.',
-            requestId: req.id,
-          });
-        }
-        if (req.status === 'completed' && req.reviewId) {
-          api.addNotification({
-            type: 'review',
-            title: '리뷰 등록',
-            message: '의뢰자가 리뷰를 남겼습니다.',
-            requestId: req.id,
-          });
-        }
-      });
-      // 시스템 알림
-      api.addNotification({
-        type: 'system',
-        title: '슥싹 매칭에 오신 것을 환영합니다!',
-        message: '청소 의뢰를 등록하거나 청소자로 활동을 시작해보세요.',
-      });
-    }
-    load();
+        // 시스템 알림
+        await api.addNotification({
+          type: 'system',
+          title: '슥싹 매칭에 오신 것을 환영합니다!',
+          message: '청소 의뢰를 등록하거나 청소자로 활동을 시작해보세요.',
+        });
+      }
+      await load();
+    })();
   }, []);
 
-  const handleClick = (noti: AppNotification) => {
-    api.markNotificationRead(noti.id);
-    load();
+  const handleClick = async (noti: AppNotification) => {
+    await api.markNotificationRead(noti.id);
+    await load();
     if (noti.requestId) {
       const role = api.getRole();
       if (role === 'client') {
@@ -97,9 +100,9 @@ export default function NotificationCenter() {
     }
   };
 
-  const handleMarkAllRead = () => {
-    api.markAllNotificationsRead();
-    load();
+  const handleMarkAllRead = async () => {
+    await api.markAllNotificationsRead();
+    await load();
   };
 
   const unreadCount = notifications.filter((n) => !n.read).length;

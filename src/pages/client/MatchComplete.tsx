@@ -10,8 +10,10 @@ export default function MatchComplete() {
 
   useEffect(() => {
     if (!id) return;
-    const req = api.getRequestById(id);
-    setRequest(req);
+    (async () => {
+      const req = await api.getRequestById(id);
+      setRequest(req);
+    })();
   }, [id]);
 
   if (!request) {

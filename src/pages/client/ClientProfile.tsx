@@ -12,13 +12,15 @@ export default function ClientProfile() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const profile = api.getClientProfile();
-    if (profile) {
-      setName(profile.name);
-      setPhone(profile.phone);
-      setAddress(profile.address);
-      setPhoto(profile.photo);
-    }
+    (async () => {
+      const profile = await api.getClientProfile();
+      if (profile) {
+        setName(profile.name);
+        setPhone(profile.phone);
+        setAddress(profile.address);
+        setPhoto(profile.photo);
+      }
+    })();
   }, []);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,12 +37,12 @@ export default function ClientProfile() {
     reader.readAsDataURL(file);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) {
       alert('이름을 입력해주세요.');
       return;
     }
-    api.saveClientProfile({
+    await api.saveClientProfile({
       name: name.trim(),
       phone: phone.trim(),
       address: address.trim(),

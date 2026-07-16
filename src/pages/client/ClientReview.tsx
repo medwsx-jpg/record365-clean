@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { CleaningRequest } from '../../types';
+import type { CleaningRequest, Review } from '../../types';
 import { getZoneLabel, CATEGORY_LABELS, AS_REASONS } from '../../types';
 import { api } from '../../store';
 import PhotoLightbox from '../../components/PhotoLightbox';
@@ -11,6 +11,7 @@ export default function ClientReview() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [request, setRequest] = useState<CleaningRequest | null>(null);
+  const [existingReview, setExistingReview] = useState<Review | null>(null);
   const [activeZone, setActiveZone] = useState<string>('');
   const [viewMode, setViewMode] = useState<ViewMode>('side');
   const [lightbox, setLightbox] = useState<{ photos: { id: string; dataUrl: string; label?: string }[]; index: number } | null>(null);
@@ -20,12 +21,18 @@ export default function ClientReview() {
 
   useEffect(() => {
     if (!id) return;
-    const req = api.getRequestById(id);
-    if (req) {
-      setRequest(req);
-      const zones = [...new Set(req.photos.filter((p) => p.type === 'before').map((p) => p.zone))];
-      if (zones.length > 0) setActiveZone(zones[0]);
-    }
+    (async () => {
+      const req = await api.getRequestById(id);
+      if (req) {
+        setRequest(req);
+        const zones = [...new Set(req.photos.filter((p) => p.type === 'before').map((p) => p.zone))];
+        if (zones.length > 0) setActiveZone(zones[0]);
+        if (req.reviewId) {
+          const review = await api.getReviewById(req.reviewId);
+          if (review) setExistingReview(review);
+        }
+      }
+    })();
   }, [id]);
 
   if (!request) {
@@ -39,7 +46,6 @@ export default function ClientReview() {
   const isCompleted = request.status === 'completed';
   const isAsRequested = request.status === 'as_requested';
   const hasReview = !!request.reviewId;
-  const existingReview = hasReview ? api.getReviewById(request.reviewId!) : null;
   const beforePhotos = request.photos.filter((p) => p.type === 'before');
   const afterPhotos = request.afterPhotos || [];
   const zones = [...new Set(beforePhotos.map((p) => p.zone))];
@@ -53,23 +59,23 @@ export default function ClientReview() {
     });
   };
 
-  const handleConfirm = () => {
-    api.updateRequest(request.id, { status: 'completed' });
+  const handleConfirm = async () => {
+    await api.updateRequest(request.id, { status: 'completed' });
     navigate(`/clean/client/review/${request.id}/write`, { replace: true });
   };
 
-  const handleAsRequest = () => {
+  const handleAsRequest = async () => {
     if (!asReason && !asComment.trim()) return;
     const commentText = asComment.trim()
       ? `[${asReason}] ${asComment.trim()}`
       : asReason;
-    api.updateRequest(request.id, {
+    await api.updateRequest(request.id, {
       status: 'as_requested',
       asComment: commentText,
       asRequestedAt: new Date().toISOString(),
     });
     setAsModal(false);
-    setRequest(api.getRequestById(request.id) || null);
+    setRequest(await api.getRequestById(request.id) || null);
   };
 
   const renderStars = (rating: number) => {

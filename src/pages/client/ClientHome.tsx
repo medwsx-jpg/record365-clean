@@ -72,6 +72,7 @@ function renderStars(rating: number) {
 export default function ClientHome() {
   const navigate = useNavigate();
   const [requests, setRequests] = useState<CleaningRequest[]>([]);
+  const [reviewMap, setReviewMap] = useState<Record<string, { rating: number }>>({});
   const [, setTick] = useState(0);
   const [cancelModal, setCancelModal] = useState<{ requestId: string; step: 'confirm' | 'reason' } | null>(null);
   const [cancelReason, setCancelReason] = useState('');
@@ -79,17 +80,30 @@ export default function ClientHome() {
   const [newPrice, setNewPrice] = useState('');
 
   useEffect(() => {
-    const loadAndAutoComplete = () => {
-      const reqs = api.getRequests();
-      reqs.forEach((r) => {
+    const loadAndAutoComplete = async () => {
+      const reqs = await api.getRequests();
+      for (const r of reqs) {
         if (r.status === 'waiting_confirm' && r.completedAt) {
           const deadline = new Date(r.completedAt).getTime() + AUTO_COMPLETE_HOURS * 60 * 60 * 1000;
           if (Date.now() >= deadline) {
-            api.updateRequest(r.id, { status: 'completed' });
+            await api.updateRequest(r.id, { status: 'completed' });
           }
         }
-      });
-      setRequests(api.getRequests());
+      }
+      const updated = await api.getRequests();
+      setRequests(updated);
+
+      // Preload reviews for completed requests
+      const rMap: Record<string, { rating: number }> = {};
+      for (const r of updated) {
+        if (r.status === 'completed' && r.reviewId) {
+          const review = await api.getReviewById(r.reviewId);
+          if (review) {
+            rMap[r.reviewId] = { rating: review.rating };
+          }
+        }
+      }
+      setReviewMap(rMap);
     };
     loadAndAutoComplete();
     const interval = setInterval(loadAndAutoComplete, 3000);
@@ -122,19 +136,19 @@ export default function ClientHome() {
     setCancelReason('');
   };
 
-  const handleCancelConfirm = () => {
+  const handleCancelConfirm = async () => {
     if (!cancelModal) return;
     if (cancelModal.step === 'confirm') {
       setCancelModal({ ...cancelModal, step: 'reason' });
       return;
     }
-    api.updateRequest(cancelModal.requestId, {
+    await api.updateRequest(cancelModal.requestId, {
       status: 'cancelled',
       cancelReason: cancelReason || '취소 사유 없음',
       cancelledAt: new Date().toISOString(),
     });
     setCancelModal(null);
-    setRequests(api.getRequests());
+    setRequests(await api.getRequests());
   };
 
   const handlePriceAdjust = (e: React.MouseEvent, req: CleaningRequest) => {
@@ -143,13 +157,13 @@ export default function ClientHome() {
     setNewPrice(req.price.toString());
   };
 
-  const handlePriceConfirm = () => {
+  const handlePriceConfirm = async () => {
     if (!priceModal) return;
     const price = parseInt(newPrice, 10);
     if (isNaN(price) || price < 10000) return;
-    api.updateRequest(priceModal.requestId, { price });
+    await api.updateRequest(priceModal.requestId, { price });
     setPriceModal(null);
-    setRequests(api.getRequests());
+    setRequests(await api.getRequests());
   };
 
   return (
@@ -293,7 +307,7 @@ export default function ClientHome() {
           ) : (
             <div className="space-y-3">
               {completed.map((req) => {
-                const review = req.reviewId ? api.getReviewById(req.reviewId) : null;
+                const review = req.reviewId ? reviewMap[req.reviewId] || null : null;
                 return (
                   <button
                     key={req.id}

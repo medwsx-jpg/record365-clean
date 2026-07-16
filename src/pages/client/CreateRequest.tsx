@@ -486,7 +486,7 @@ export default function CreateRequest() {
     if (autoAreas.length > 0) setPhotoAreas(autoAreas);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!category) return;
     let notesWithInfo = notes;
     if (category === 'home') {
@@ -510,7 +510,7 @@ export default function CreateRequest() {
       status: 'pending',
       createdAt: new Date().toISOString(),
     };
-    api.saveRequest(request);
+    await api.saveRequest(request);
     navigate('/clean/client');
   };
 

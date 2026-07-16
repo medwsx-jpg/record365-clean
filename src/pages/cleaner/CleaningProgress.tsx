@@ -16,20 +16,22 @@ export default function CleaningProgress() {
 
   useEffect(() => {
     if (!id) return;
-    const req = api.getRequestById(id);
-    if (req) {
-      setRequest(req);
-      setAfterPhotos(req.afterPhotos || []);
-      const zones = [...new Set(req.photos.filter((p) => p.type === 'before').map((p) => p.zone))];
-      if (zones.length > 0) setActiveZone(zones[0]);
-    }
+    (async () => {
+      const req = await api.getRequestById(id);
+      if (req) {
+        setRequest(req);
+        setAfterPhotos(req.afterPhotos || []);
+        const zones = [...new Set(req.photos.filter((p) => p.type === 'before').map((p) => p.zone))];
+        if (zones.length > 0) setActiveZone(zones[0]);
+      }
+    })();
   }, [id]);
 
   const handleAfterPhotosChange = useCallback(
-    (photos: Photo[]) => {
+    async (photos: Photo[]) => {
       setAfterPhotos(photos);
       if (request) {
-        api.updateRequest(request.id, { afterPhotos: photos });
+        await api.updateRequest(request.id, { afterPhotos: photos });
       }
     },
     [request],

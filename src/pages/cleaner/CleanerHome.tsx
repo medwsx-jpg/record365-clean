@@ -37,8 +37,8 @@ export default function CleanerHome() {
   const [requests, setRequests] = useState<CleaningRequest[]>([]);
   const [myRequests, setMyRequests] = useState<CleaningRequest[]>([]);
 
-  const loadRequests = () => {
-    const all = api.getRequests();
+  const loadRequests = async () => {
+    const all = await api.getRequests();
     setRequests(all.filter((r) => r.status === 'pending'));
     setMyRequests(all.filter((r) => ['matched', 'in_progress', 'waiting_confirm', 'as_requested'].includes(r.status)));
   };

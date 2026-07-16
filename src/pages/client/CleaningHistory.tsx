@@ -21,14 +21,27 @@ export default function CleaningHistory() {
   const navigate = useNavigate();
   const role = api.getRole();
   const [requests, setRequests] = useState<CleaningRequest[]>([]);
+  const [reviewCache, setReviewCache] = useState<Record<string, Review | undefined>>({});
   const [filter, setFilter] = useState<FilterTab>('all');
   const [reportId, setReportId] = useState<string | null>(null);
 
   useEffect(() => {
-    const all = api.getRequests();
-    // 최신순 정렬
-    all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    setRequests(all);
+    (async () => {
+      const all = await api.getRequests();
+      // 최신순 정렬
+      all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setRequests(all);
+
+      // Preload reviews for report view
+      const cache: Record<string, Review | undefined> = {};
+      for (const r of all) {
+        if (r.status === 'completed') {
+          const review = await api.getReviewByRequestId(r.id);
+          if (review) cache[r.id] = review;
+        }
+      }
+      setReviewCache(cache);
+    })();
   }, []);
 
   const filtered = requests.filter((r) => {
@@ -45,7 +58,7 @@ export default function CleaningHistory() {
   };
 
   const reportRequest = reportId ? requests.find((r) => r.id === reportId) : null;
-  const reportReview = reportId ? api.getReviewByRequestId(reportId) : undefined;
+  const reportReview = reportId ? reviewCache[reportId] : undefined;
 
   if (reportRequest) {
     return <CleaningReport request={reportRequest} review={reportReview} onBack={() => setReportId(null)} />;

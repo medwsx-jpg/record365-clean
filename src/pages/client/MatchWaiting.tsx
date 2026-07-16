@@ -10,15 +10,17 @@ export default function MatchWaiting() {
 
   useEffect(() => {
     if (!id) return;
-    setRequest(api.getRequestById(id));
+    (async () => {
+      setRequest(await api.getRequestById(id));
+    })();
   }, [id]);
 
   // Poll for any status change from pending
   useEffect(() => {
     if (!id) return;
 
-    const interval = setInterval(() => {
-      const updated = api.getRequestById(id);
+    const interval = setInterval(async () => {
+      const updated = await api.getRequestById(id);
       if (updated) {
         setRequest(updated);
         // pending이 아닌 다른 상태로 변하면 홈으로 이동
@@ -32,9 +34,9 @@ export default function MatchWaiting() {
     return () => clearInterval(interval);
   }, [id, navigate]);
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
     if (!id) return;
-    api.deleteRequest(id);
+    await api.deleteRequest(id);
     navigate('/clean/client', { replace: true });
   };
 

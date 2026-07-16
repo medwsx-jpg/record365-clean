@@ -21,24 +21,24 @@ export default function ChatList() {
   const role = api.getRole();
   const [chatRooms, setChatRooms] = useState<{ request: CleaningRequest; lastMessage: string; lastTime: string; unread: number }[]>([]);
 
-  const loadChatRooms = () => {
-    const all = api.getRequests();
+  const loadChatRooms = async () => {
+    const all = await api.getRequests();
     // 매칭 이후 상태의 의뢰만 채팅 가능
     const chatable = all.filter((r) =>
       ['matched', 'in_progress', 'waiting_confirm', 'completed', 'as_requested'].includes(r.status)
     );
 
-    const rooms = chatable.map((req) => {
-      const messages = api.getMessages(req.id);
+    const rooms = await Promise.all(chatable.map(async (req) => {
+      const messages = await api.getMessages(req.id);
       const last = messages[messages.length - 1];
-      const unread = role ? api.getUnreadCount(req.id, role) : 0;
+      const unread = role ? await api.getUnreadCount(req.id, role) : 0;
       return {
         request: req,
         lastMessage: last ? (last.type === 'image' ? '📷 사진' : last.content) : '대화를 시작해보세요',
         lastTime: last ? last.createdAt : req.createdAt,
         unread,
       };
-    });
+    }));
 
     // 최근 메시지순 정렬
     rooms.sort((a, b) => new Date(b.lastTime).getTime() - new Date(a.lastTime).getTime());
@@ -109,8 +109,7 @@ export default function ChatList() {
               </button>
             );
           })}
-        </div>
-      )}
+        </div>      )}
 
       <BottomNav />
     </div>

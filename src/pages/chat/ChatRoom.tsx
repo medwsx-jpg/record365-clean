@@ -163,30 +163,32 @@ export default function ChatRoom() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
 
-  const loadMessages = () => {
+  const loadMessages = async () => {
     if (!id) return;
-    const msgs = api.getMessages(id);
+    const msgs = await api.getMessages(id);
     setMessages(msgs);
-    if (role) api.markMessagesRead(id, role);
+    if (role) await api.markMessagesRead(id, role);
   };
 
   useEffect(() => {
     if (!id) return;
-    const req = api.getRequestById(id);
-    if (req) setRequest(req);
-    loadMessages();
-    // 시스템 메시지 자동 생성 (최초 진입시)
-    const existing = api.getMessages(id);
-    if (existing.length === 0 && req) {
-      api.sendMessage({
-        requestId: id,
-        senderRole: 'client',
-        senderName: '시스템',
-        content: `${CATEGORY_LABELS[req.category]} 의뢰가 매칭되었습니다. 대화를 시작해보세요.`,
-        type: 'system',
-      });
-      loadMessages();
-    }
+    (async () => {
+      const req = await api.getRequestById(id);
+      if (req) setRequest(req);
+      await loadMessages();
+      // 시스템 메시지 자동 생성 (최초 진입시)
+      const existing = await api.getMessages(id);
+      if (existing.length === 0 && req) {
+        await api.sendMessage({
+          requestId: id,
+          senderRole: 'client',
+          senderName: '시스템',
+          content: `${CATEGORY_LABELS[req.category]} 의뢰가 매칭되었습니다. 대화를 시작해보세요.`,
+          type: 'system',
+        });
+        await loadMessages();
+      }
+    })();
     const interval = setInterval(loadMessages, 1500);
     return () => clearInterval(interval);
   }, [id]);
@@ -203,19 +205,19 @@ export default function ChatRoom() {
     setAutoScroll(scrollHeight - scrollTop - clientHeight < 100);
   };
 
-  const handleSend = (text: string) => {
+  const handleSend = async (text: string) => {
     if (!id || !role || !request) return;
     const isClient = role === 'client';
     const profile = localStorage.getItem('cleanmatch_cleaner_profile');
     const cleanerName = profile ? JSON.parse(profile).name || '청소자' : '청소자';
-    api.sendMessage({
+    await api.sendMessage({
       requestId: id,
       senderRole: role,
       senderName: isClient ? '의뢰자' : cleanerName,
       content: text,
       type: 'text',
     });
-    loadMessages();
+    await loadMessages();
     setAutoScroll(true);
   };
 

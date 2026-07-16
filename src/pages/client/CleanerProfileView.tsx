@@ -11,38 +11,39 @@ export default function CleanerProfileView() {
 
   useEffect(() => {
     if (!cleanerId) return;
+    (async () => {
+      // 청소자 정보 가져오기 — 프로필 또는 의뢰 데이터에서 조합
+      const profile = localStorage.getItem('cleanmatch_cleaner_profile');
+      const parsed = profile ? JSON.parse(profile) : null;
+      const cleanerReviews = await api.getReviewsByCleanerId(cleanerId);
+      setReviews(cleanerReviews);
 
-    // 청소자 정보 가져오기 — 프로필 또는 의뢰 데이터에서 조합
-    const profile = localStorage.getItem('cleanmatch_cleaner_profile');
-    const parsed = profile ? JSON.parse(profile) : null;
-    const cleanerReviews = api.getReviewsByCleanerId(cleanerId);
-    setReviews(cleanerReviews);
+      // 완료 건수 계산
+      const allRequests = await api.getRequests();
+      const completedCount = allRequests.filter(
+        (r) => r.cleanerId === cleanerId && r.status === 'completed'
+      ).length;
 
-    // 완료 건수 계산
-    const allRequests = api.getRequests();
-    const completedCount = allRequests.filter(
-      (r) => r.cleanerId === cleanerId && r.status === 'completed'
-    ).length;
+      const avgRating = await api.getCleanerAverageRating(cleanerId);
 
-    const avgRating = api.getCleanerAverageRating(cleanerId);
-
-    if (parsed && (cleanerId === 'self' || cleanerId === parsed.id)) {
-      setCleanerInfo({
-        name: parsed.name || '청소자',
-        photo: parsed.photo || '',
-        completedJobs: completedCount,
-        rating: avgRating,
-      });
-    } else {
-      // mock cleaner 또는 의뢰에서 이름 추출
-      const req = allRequests.find((r) => r.cleanerId === cleanerId);
-      setCleanerInfo({
-        name: req?.cleanerName || '청소자',
-        photo: req?.cleanerPhoto || '',
-        completedJobs: completedCount,
-        rating: avgRating,
-      });
-    }
+      if (parsed && (cleanerId === 'self' || cleanerId === parsed.id)) {
+        setCleanerInfo({
+          name: parsed.name || '청소자',
+          photo: parsed.photo || '',
+          completedJobs: completedCount,
+          rating: avgRating,
+        });
+      } else {
+        // mock cleaner 또는 의뢰에서 이름 추출
+        const req = allRequests.find((r) => r.cleanerId === cleanerId);
+        setCleanerInfo({
+          name: req?.cleanerName || '청소자',
+          photo: req?.cleanerPhoto || '',
+          completedJobs: completedCount,
+          rating: avgRating,
+        });
+      }
+    })();
   }, [cleanerId]);
 
   if (!cleanerInfo) {

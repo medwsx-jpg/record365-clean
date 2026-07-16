@@ -15,17 +15,19 @@ export default function WriteReview() {
 
   useEffect(() => {
     if (!id) return;
-    const req = api.getRequestById(id);
-    if (req) {
-      setRequest(req);
-      // 이미 리뷰가 있는지 확인
-      const review = api.getReviewByRequestId(id);
-      if (review) {
-        setExistingReview(true);
-        setRating(review.rating);
-        setComment(review.comment);
+    (async () => {
+      const req = await api.getRequestById(id);
+      if (req) {
+        setRequest(req);
+        // 이미 리뷰가 있는지 확인
+        const review = await api.getReviewByRequestId(id);
+        if (review) {
+          setExistingReview(true);
+          setRating(review.rating);
+          setComment(review.comment);
+        }
       }
-    }
+    })();
   }, [id]);
 
   if (!request) {
@@ -36,10 +38,9 @@ export default function WriteReview() {
     );
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!request.cleanerId || !request.cleanerName) return;
-    api.saveReview({
-      id: api.generateId(),
+    await api.saveReview({
       requestId: request.id,
       cleanerId: request.cleanerId,
       cleanerName: request.cleanerName,

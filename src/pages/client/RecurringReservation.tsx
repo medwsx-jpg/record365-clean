@@ -25,22 +25,24 @@ export default function RecurringReservation() {
   const [frequency, setFrequency] = useState<'weekly' | 'biweekly'>('weekly');
 
   useEffect(() => {
-    setSchedules(api.getRecurringSchedules());
-    // 기본 주소 불러오기
-    const profile = api.getClientProfile();
-    if (profile?.address) setAddress(profile.address);
+    (async () => {
+      setSchedules(await api.getRecurringSchedules());
+      // 기본 주소 불러오기
+      const profile = await api.getClientProfile();
+      if (profile?.address) setAddress(profile.address);
+    })();
   }, []);
 
   const toggleDay = (d: number) => {
     setDays((prev) => prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d].sort());
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (days.length === 0) { alert('요일을 1개 이상 선택해주세요.'); return; }
     if (!address.trim()) { alert('주소를 입력해주세요.'); return; }
     if (!price || parseInt(price) < 10000) { alert('금액을 입력해주세요 (최소 1만원).'); return; }
 
-    api.saveRecurringSchedule({
+    await api.saveRecurringSchedule({
       category,
       address: address.trim(),
       price: parseInt(price),
@@ -51,7 +53,7 @@ export default function RecurringReservation() {
       startDate: new Date().toISOString().split('T')[0],
     });
 
-    setSchedules(api.getRecurringSchedules());
+    setSchedules(await api.getRecurringSchedules());
     setShowForm(false);
     // 폼 초기화
     setDays([]);
@@ -59,15 +61,15 @@ export default function RecurringReservation() {
     setPrice('');
   };
 
-  const handleToggleActive = (id: string, active: boolean) => {
-    api.updateRecurringSchedule(id, { active: !active });
-    setSchedules(api.getRecurringSchedules());
+  const handleToggleActive = async (id: string, active: boolean) => {
+    await api.updateRecurringSchedule(id, { active: !active });
+    setSchedules(await api.getRecurringSchedules());
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('이 정기 예약을 삭제하시겠습니까?')) {
-      api.deleteRecurringSchedule(id);
-      setSchedules(api.getRecurringSchedules());
+      await api.deleteRecurringSchedule(id);
+      setSchedules(await api.getRecurringSchedules());
     }
   };
 

@@ -17,12 +17,14 @@ export default function CleaningComplete() {
 
   useEffect(() => {
     if (!id) return;
-    const req = api.getRequestById(id);
-    if (req) {
-      setRequest(req);
-      const zones = [...new Set(req.photos.filter((p) => p.type === 'before').map((p) => p.zone))];
-      if (zones.length > 0) setActiveZone(zones[0]);
-    }
+    (async () => {
+      const req = await api.getRequestById(id);
+      if (req) {
+        setRequest(req);
+        const zones = [...new Set(req.photos.filter((p) => p.type === 'before').map((p) => p.zone))];
+        if (zones.length > 0) setActiveZone(zones[0]);
+      }
+    })();
   }, [id]);
 
   if (!request) {
@@ -49,8 +51,8 @@ export default function CleaningComplete() {
     });
   };
 
-  const handleSubmit = () => {
-    api.updateRequest(request.id, { status: 'waiting_confirm', completedAt: new Date().toISOString() });
+  const handleSubmit = async () => {
+    await api.updateRequest(request.id, { status: 'waiting_confirm', completedAt: new Date().toISOString() });
     alert('완료 보고가 제출되었습니다.\n의뢰자의 확인을 기다려주세요.');
     navigate('/clean/cleaner');
   };

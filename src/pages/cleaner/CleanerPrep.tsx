@@ -32,8 +32,10 @@ export default function CleanerPrep() {
 
   useEffect(() => {
     if (!id) return;
-    const req = api.getRequestById(id);
-    if (req) setRequest(req);
+    (async () => {
+      const req = await api.getRequestById(id);
+      if (req) setRequest(req);
+    })();
   }, [id]);
 
   if (!request) {
@@ -56,13 +58,13 @@ export default function CleanerPrep() {
     });
   };
 
-  const handleStartCleaning = () => {
-    api.updateRequest(request.id, { status: 'in_progress' });
+  const handleStartCleaning = async () => {
+    await api.updateRequest(request.id, { status: 'in_progress' });
     navigate(`/clean/cleaner/progress/${request.id}`);
   };
 
-  const handleCancel = () => {
-    api.updateRequest(request.id, {
+  const handleCancel = async () => {
+    await api.updateRequest(request.id, {
       status: 'pending',
       cleanerId: undefined,
       cleanerName: undefined,

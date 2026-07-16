@@ -14,12 +14,14 @@ export default function RequestDetail() {
 
   useEffect(() => {
     if (!id) return;
-    const req = api.getRequestById(id);
-    if (req) {
-      setRequest(req);
-      const zones = [...new Set(req.photos.filter((p) => p.type === 'before').map((p) => p.zone))];
-      if (zones.length > 0) setActiveZone(zones[0]);
-    }
+    (async () => {
+      const req = await api.getRequestById(id);
+      if (req) {
+        setRequest(req);
+        const zones = [...new Set(req.photos.filter((p) => p.type === 'before').map((p) => p.zone))];
+        if (zones.length > 0) setActiveZone(zones[0]);
+      }
+    })();
   }, [id]);
 
   if (!request) {
@@ -43,7 +45,7 @@ export default function RequestDetail() {
     });
   };
 
-  const handleApply = () => {
+  const handleApply = async () => {
     const profile = JSON.parse(localStorage.getItem('cleanmatch_cleaner_profile') || 'null');
     const cleaner = profile ? {
       id: 'self',
@@ -52,7 +54,7 @@ export default function RequestDetail() {
       photo: profile.photo || '',
     } : MOCK_CLEANERS[0];
 
-    api.updateRequest(request.id, {
+    await api.updateRequest(request.id, {
       status: 'matched',
       cleanerId: cleaner.id,
       cleanerName: cleaner.name,
