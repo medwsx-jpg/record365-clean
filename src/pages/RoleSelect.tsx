@@ -31,7 +31,7 @@ export default function RoleSelect() {
             <path d="M26 28l6-6c1-1 3-1 4 0l0 0c1 1 1 3 0 4l-6 6-4-4z" fill="currentColor" />
           </svg>
         </div>
-        <h1 className="text-3xl font-bold text-green-500 tracking-tight">CleanMatch</h1>
+        <h1 className="text-3xl font-bold text-green-500 tracking-tight">슥싹매칭</h1>
         <p className="text-gray-500 mt-2 text-sm">깨끗한 공간, 쉬운 매칭</p>
       </div>
 
@@ -79,7 +79,7 @@ export default function RoleSelect() {
         </button>
       </div>
 
-      <p className="text-xs text-gray-300 mt-12">CleanMatch &copy; 2026</p>
+      <p className="text-xs text-gray-300 mt-12">슥싹매칭 &copy; 2026</p>
     </div>
   );
 }

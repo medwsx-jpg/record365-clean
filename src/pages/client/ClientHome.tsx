@@ -169,7 +169,7 @@ export default function ClientHome() {
   return (
     <div className="min-h-screen bg-gray-50 max-w-[480px] mx-auto pb-20">
       <header className="bg-white px-4 py-4 shadow-sm sticky top-0 z-40">
-        <h1 className="text-xl font-bold text-green-500">CleanMatch</h1>
+        <h1 className="text-xl font-bold text-green-500">슥싹매칭</h1>
       </header>
 
       <div className="px-4 pt-4 space-y-6">
