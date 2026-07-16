@@ -7,6 +7,7 @@ interface NavItem {
   path: string;
   disabled?: boolean;
   disabledLabel?: string;
+  externalUrl?: string;
 }
 
 export default function BottomNav() {
@@ -83,6 +84,18 @@ export default function BottomNav() {
       path: '/clean/cleaner',
     },
     {
+      label: '청소용품',
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="9" cy="21" r="1" />
+          <circle cx="20" cy="21" r="1" />
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+        </svg>
+      ),
+      path: '#coupang',
+      externalUrl: 'https://www.coupang.com/np/search?q=%EC%B2%AD%EC%86%8C%EC%9A%A9%ED%92%88',
+    },
+    {
       label: '채팅',
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -106,7 +119,7 @@ export default function BottomNav() {
   const items = role === 'cleaner' ? cleanerItems : clientItems;
 
   const isActive = (path: string) => {
-    if (path === '#') return false;
+    if (path === '#' || path === '#coupang') return false;
     return location.pathname === path;
   };
 
@@ -120,7 +133,11 @@ export default function BottomNav() {
               key={item.label}
               onClick={() => {
                 if (!item.disabled) {
-                  navigate(item.path);
+                  if (item.externalUrl) {
+                    window.open(item.externalUrl, '_blank');
+                  } else {
+                    navigate(item.path);
+                  }
                 }
               }}
               disabled={item.disabled}

@@ -36,7 +36,7 @@ export default function RoleSelect() {
       </div>
 
       <div className="w-full space-y-4">
-        <button onClick={() => handleSelect('client')} className="w-full bg-white rounded-2xl border-2 border-green-400 p-6 shadow-sm hover:shadow-md active:scale-[0.98] transition-all text-left">
+        <button onClick={() => handleSelect('client')} className="w-full bg-white rounded-2xl border-2 border-green-400 p-6 shadow-sm hover:shadow-md active:scale-[0.98] transition-all">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center text-green-500 shrink-0">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -44,10 +44,7 @@ export default function RoleSelect() {
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-gray-800">의뢰자</h2>
-              <p className="text-sm text-gray-500 mt-0.5">청소를 맡기고 싶어요</p>
-            </div>
+            <p className="text-lg font-bold text-gray-800">청소를 맡기고 싶어요</p>
             <div className="ml-auto text-green-400">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="9 18 15 12 9 6" />
@@ -56,7 +53,7 @@ export default function RoleSelect() {
           </div>
         </button>
 
-        <button onClick={() => handleSelect('cleaner')} className="w-full bg-white rounded-2xl border-2 border-blue-400 p-6 shadow-sm hover:shadow-md active:scale-[0.98] transition-all text-left">
+        <button onClick={() => handleSelect('cleaner')} className="w-full bg-white rounded-2xl border-2 border-blue-400 p-6 shadow-sm hover:shadow-md active:scale-[0.98] transition-all">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -66,10 +63,7 @@ export default function RoleSelect() {
                 <line x1="5" y1="18" x2="5" y2="22" />
               </svg>
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-gray-800">청소자</h2>
-              <p className="text-sm text-gray-500 mt-0.5">청소를 하고 싶어요</p>
-            </div>
+            <p className="text-lg font-bold text-gray-800">청소를 하고 싶어요</p>
             <div className="ml-auto text-blue-400">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="9 18 15 12 9 6" />
