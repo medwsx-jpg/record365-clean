@@ -66,7 +66,7 @@ export function isTrainingCompleted(): boolean {
   return TRAINING_MODULES.every((m) => state[m.id] === true);
 }
 
-// 슬라이드 뷰어 모달 (모바일 최적화: 풀폭 + 스와이프)
+// 슬라이드 뷰어 모달 (강제 가로 모드: 90도 회전)
 function SlideViewer({
   module,
   onComplete,
@@ -95,12 +95,12 @@ function SlideViewer({
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.touches[0].clientX);
+    setTouchStart(e.touches[0].clientY);
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (touchStart === null) return;
-    const diff = touchStart - e.changedTouches[0].clientX;
+    const diff = touchStart - e.changedTouches[0].clientY;
     if (diff > 50) goNext();
     else if (diff < -50) goPrev();
     setTouchStart(null);
@@ -109,9 +109,19 @@ function SlideViewer({
   const padNum = (n: number) => String(n).padStart(2, '0');
 
   return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col">
+    <div
+      className="fixed bg-black z-50 flex flex-col"
+      style={{
+        top: 0,
+        left: '100%',
+        width: '100vh',
+        height: '100vw',
+        transformOrigin: 'top left',
+        transform: 'rotate(90deg)',
+      }}
+    >
       {/* 상단 바 */}
-      <div className="flex items-center justify-between px-4 py-3 bg-black/70 shrink-0">
+      <div className="flex items-center justify-between px-4 py-2 bg-black/70 shrink-0">
         <button onClick={onClose} className="text-white/80 text-sm">
           ✕ 닫기
         </button>
@@ -119,16 +129,16 @@ function SlideViewer({
         <span className="text-white/60 text-xs">{currentSlide + 1} / {total}</span>
       </div>
 
-      {/* 슬라이드 이미지 영역 — 풀폭 + 세로 스크롤 */}
+      {/* 슬라이드 이미지 영역 */}
       <div
-        className="flex-1 overflow-y-auto relative"
+        className="flex-1 flex items-center justify-center relative overflow-hidden"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
         <img
           src={`${module.slidePath}/slide-${padNum(currentSlide + 1)}.jpg`}
           alt={`슬라이드 ${currentSlide + 1}`}
-          className="w-full block"
+          className="w-full h-full object-contain"
         />
 
         {/* 이전 영역 (좌측 탭) */}
@@ -151,9 +161,8 @@ function SlideViewer({
       </div>
 
       {/* 하단 네비게이션 */}
-      <div className="px-4 py-3 bg-black/70 shrink-0">
-        {/* 좌우 버튼 + 인디케이터 */}
-        <div className="flex items-center gap-2 mb-3">
+      <div className="px-4 py-2 bg-black/70 shrink-0">
+        <div className="flex items-center gap-2 mb-2">
           <button
             onClick={goPrev}
             disabled={currentSlide === 0}
@@ -191,12 +200,12 @@ function SlideViewer({
         {canComplete ? (
           <button
             onClick={onComplete}
-            className="w-full py-3 bg-green-500 text-white font-semibold rounded-xl active:bg-green-600 transition-colors"
+            className="w-full py-2 bg-green-500 text-white font-semibold rounded-xl active:bg-green-600 transition-colors"
           >
             이수 완료
           </button>
         ) : (
-          <p className="text-center text-white/50 text-xs py-2">
+          <p className="text-center text-white/50 text-xs py-1">
             모든 슬라이드를 확인하면 이수 완료할 수 있습니다 ({maxViewed + 1}/{total})
           </p>
         )}
