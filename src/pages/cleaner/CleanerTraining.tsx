@@ -34,7 +34,7 @@ const TRAINING_MODULES: Omit<TrainingModule, 'completed'>[] = [
     title: '청소 도구 사용법',
     description: '각 청소 도구의 올바른 사용법과 관리 방법을 배웁니다.',
     duration: '12분',
-    slideCount: 0,
+    slideCount: 12,
     slidePath: '/training/tools',
   },
   {
@@ -42,7 +42,7 @@ const TRAINING_MODULES: Omit<TrainingModule, 'completed'>[] = [
     title: '서비스 이용 가이드',
     description: '앱 사용법, 의뢰 수락, 완료 보고 등 서비스 이용 방법을 안내합니다.',
     duration: '8분',
-    slideCount: 0,
+    slideCount: 12,
     slidePath: '/training/service',
   },
 ];
