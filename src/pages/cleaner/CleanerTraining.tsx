@@ -236,7 +236,7 @@ export default function CleanerTraining() {
         {modules.map((mod, idx) => (
           <button
             key={mod.id}
-            onClick={() => !mod.completed && mod.slideCount > 0 && setPlayingModule(mod.id)}
+            onClick={() => mod.slideCount > 0 && setPlayingModule(mod.id)}
             className={`w-full text-left bg-white rounded-xl border p-4 transition-colors ${
               mod.completed
                 ? 'border-green-200 bg-green-50/50'
