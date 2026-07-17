@@ -275,6 +275,28 @@ export default function ClientReview() {
         </div>
       )}
 
+      {/* 재예약 + 정기 청소 (완료 상태) */}
+      {isCompleted && (
+        <section className="bg-white mt-2 p-4 space-y-2">
+          <button onClick={() => navigate('/clean/client/create', { state: { rebookFrom: request } })}
+            className="w-full py-3 bg-white border-2 border-green-400 text-green-600 font-semibold rounded-xl text-sm active:bg-green-50 transition-colors flex items-center justify-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+            </svg>
+            같은 청소자로 다시 예약
+          </button>
+          {existingReview && existingReview.rating >= 4 && (
+            <button onClick={() => navigate('/clean/client/recurring')}
+              className="w-full py-3 bg-green-500 text-white font-bold rounded-xl text-sm active:bg-green-600 transition-colors flex items-center justify-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+              </svg>
+              정기 청소 신청하기
+            </button>
+          )}
+        </section>
+      )}
+
       {/* 하단 버튼: 확인 대기 상태에서만 */}
       {showBottomButtons && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 max-w-[480px] mx-auto z-50">

@@ -53,6 +53,7 @@ export default function WriteReview() {
   };
 
   if (submitted) {
+    const isHighRating = rating >= 4;
     return (
       <div className="min-h-screen bg-gray-50 max-w-[480px] mx-auto flex flex-col items-center justify-center px-6">
         <div className="w-20 h-20 rounded-full bg-yellow-100 flex items-center justify-center mb-4 text-4xl">
@@ -62,11 +63,35 @@ export default function WriteReview() {
         <p className="text-sm text-gray-500 text-center mb-2">
           {request.cleanerName} 청소자에게 {rating}점을 남겨주셨습니다.
         </p>
-        <p className="text-xs text-gray-400 mb-8">소중한 리뷰 감사합니다.</p>
-        <button onClick={() => navigate('/clean/client')}
-          className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3.5 rounded-xl transition-colors">
-          홈으로
-        </button>
+        <p className="text-xs text-gray-400 mb-6">소중한 리뷰 감사합니다.</p>
+
+        {isHighRating && (
+          <div className="w-full bg-green-50 border border-green-200 rounded-2xl p-5 mb-4">
+            <p className="text-sm font-semibold text-green-800 mb-1">만족하셨다면, 정기 청소는 어떠세요?</p>
+            <p className="text-xs text-green-600 mb-3">{request.cleanerName} 청소자를 정기적으로 배정받을 수 있어요.</p>
+            <button onClick={() => navigate('/clean/client/recurring')}
+              className="w-full py-3 bg-green-500 text-white font-bold rounded-xl text-sm active:bg-green-600 transition-colors flex items-center justify-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+              </svg>
+              정기 청소 신청하기
+            </button>
+          </div>
+        )}
+
+        <div className="w-full space-y-2">
+          <button onClick={() => navigate(`/clean/client/create`, { state: { rebookFrom: request } })}
+            className="w-full py-3.5 bg-white border-2 border-green-400 text-green-600 font-semibold rounded-xl text-sm active:bg-green-50 transition-colors flex items-center justify-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+            </svg>
+            같은 청소자로 다시 예약
+          </button>
+          <button onClick={() => navigate('/clean/client')}
+            className="w-full py-3.5 bg-gray-100 text-gray-600 font-medium rounded-xl text-sm active:bg-gray-200 transition-colors">
+            홈으로
+          </button>
+        </div>
       </div>
     );
   }
