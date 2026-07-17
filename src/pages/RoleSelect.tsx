@@ -38,12 +38,7 @@ export default function RoleSelect() {
       <div className="w-full space-y-4">
         <button onClick={() => handleSelect('client')} className="w-full bg-white rounded-2xl border-2 border-green-400 p-6 shadow-sm hover:shadow-md active:scale-[0.98] transition-all">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center text-green-500 shrink-0">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-              </svg>
-            </div>
+            <img src="/client-icon.png" alt="의뢰자" className="w-14 h-14 shrink-0 object-contain" />
             <p className="text-lg font-bold text-gray-800">청소를 맡기고 싶어요</p>
             <div className="ml-auto text-green-400">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -55,14 +50,7 @@ export default function RoleSelect() {
 
         <button onClick={() => handleSelect('cleaner')} className="w-full bg-white rounded-2xl border-2 border-blue-400 p-6 shadow-sm hover:shadow-md active:scale-[0.98] transition-all">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="5" y1="22" x2="14" y2="13" />
-                <path d="M13 14l4-4c.8-.8 2-.8 2.8 0 .8.8.8 2 0 2.8l-4 4-2.8-2.8z" />
-                <line x1="3" y1="20" x2="7" y2="20" />
-                <line x1="5" y1="18" x2="5" y2="22" />
-              </svg>
-            </div>
+            <img src="/cleaner-icon.png" alt="청소자" className="w-14 h-14 shrink-0 object-contain" />
             <p className="text-lg font-bold text-gray-800">청소를 하고 싶어요</p>
             <div className="ml-auto text-blue-400">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
