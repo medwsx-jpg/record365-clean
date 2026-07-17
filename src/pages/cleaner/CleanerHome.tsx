@@ -13,6 +13,16 @@ function formatPrice(price: number): string {
   return payout.toLocaleString('ko-KR');
 }
 
+// 주소 마스킹: "서울 강남구 역삼동 823-4" → "서울 강남구 역삼동"
+function maskAddress(address: string): string {
+  // 시/도 + 구/군 + 동/읍/면 까지만 추출
+  const match = address.match(/^(.+?[시도])\s+(.+?[구군])\s+(.+?[동읍면리가로길])/);
+  if (match) return `${match[1]} ${match[2]} ${match[3]}`;
+  // 매칭 안 되면 앞 3단어까지만
+  const parts = address.split(/\s+/);
+  return parts.slice(0, Math.min(3, parts.length)).join(' ') + (parts.length > 3 ? ' 근처' : '');
+}
+
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const minutes = Math.floor(diff / 60000);
@@ -31,48 +41,6 @@ const MY_STATUS_CONFIG: Record<string, { label: string; bg: string; text: string
   as_requested: { label: 'A/S 요청', bg: 'bg-red-100', text: 'text-red-700' },
 };
 
-// 더미 예정 의뢰 (매칭 완료 + 며칠 뒤 예정)
-function getDemoScheduled(): CleaningRequest[] {
-  const today = new Date();
-  const d = (offset: number) => {
-    const dt = new Date(today);
-    dt.setDate(dt.getDate() + offset);
-    return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
-  };
-  return [
-    {
-      id: 'demo-1',
-      clientId: 'demo-client-1',
-      category: 'home',
-      date: d(3),
-      time: '10:00',
-      address: '서울 강남구 역삼동 823-4',
-      price: 120000,
-      notes: '거실, 주방, 화장실 2개',
-      photos: [],
-      status: 'matched',
-      cleanerId: 'demo-cleaner',
-      cleanerName: '나',
-      createdAt: new Date(today.getTime() - 86400000).toISOString(),
-    },
-    {
-      id: 'demo-2',
-      clientId: 'demo-client-2',
-      category: 'office',
-      date: d(7),
-      time: '14:00',
-      address: '서울 서초구 서초대로 398',
-      price: 200000,
-      notes: '사무실 전체 청소',
-      photos: [],
-      status: 'matched',
-      cleanerId: 'demo-cleaner',
-      cleanerName: '나',
-      createdAt: new Date(today.getTime() - 43200000).toISOString(),
-    },
-  ];
-}
-
 export default function CleanerHome() {
   const navigate = useNavigate();
   const [sort, setSort] = useState<SortMode>('newest');
@@ -81,11 +49,8 @@ export default function CleanerHome() {
 
   const loadRequests = async () => {
     const all = await api.getRequests();
-    const realPending = all.filter((r) => r.status === 'pending');
-    const realMy = all.filter((r) => ['matched', 'in_progress', 'waiting_confirm', 'as_requested'].includes(r.status));
-    setRequests(realPending);
-    // 실제 내 의뢰가 없으면 더미 예정 데이터 표시
-    setMyRequests(realMy.length > 0 ? realMy : getDemoScheduled());
+    setRequests(all.filter((r) => r.status === 'pending'));
+    setMyRequests(all.filter((r) => ['matched', 'in_progress', 'waiting_confirm', 'as_requested'].includes(r.status)));
   };
 
   useEffect(() => {
@@ -103,10 +68,7 @@ export default function CleanerHome() {
     return a.price - b.price;
   });
 
-  const isDemo = (id: string) => id.startsWith('demo-');
-
   const handleMyClick = (req: CleaningRequest) => {
-    if (isDemo(req.id)) return; // 더미 데이터는 클릭 무시
     if (req.status === 'matched') navigate(`/clean/cleaner/prep/${req.id}`);
     else if (req.status === 'in_progress') navigate(`/clean/cleaner/progress/${req.id}`);
     else if (req.status === 'waiting_confirm') navigate(`/clean/cleaner/complete/${req.id}`);
@@ -130,7 +92,7 @@ export default function CleanerHome() {
               const dDayLabel = daysUntil > 0 ? `D-${daysUntil}` : daysUntil === 0 ? 'D-Day' : '';
               return (
                 <button key={req.id} onClick={() => handleMyClick(req)}
-                  className={`w-full bg-white rounded-xl border border-gray-200 p-4 text-left shadow-sm transition-colors ${isDemo(req.id) ? 'cursor-default' : 'active:bg-gray-50'}`}>
+                  className="w-full bg-white rounded-xl border border-gray-200 p-4 text-left shadow-sm active:bg-gray-50 transition-colors">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-800">{CATEGORY_LABELS[req.category]} · {req.date} {req.time}</span>
                     <div className="flex items-center gap-1.5">
@@ -196,7 +158,7 @@ export default function CleanerHome() {
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-gray-700 truncate">{req.address}</p>
+                <p className="text-sm text-gray-700 truncate">{maskAddress(req.address)}</p>
               </button>
             );
           })}

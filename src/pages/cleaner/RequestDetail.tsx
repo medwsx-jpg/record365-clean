@@ -5,6 +5,13 @@ import { CATEGORY_LABELS, getZoneLabel } from '../../types';
 import { api, MOCK_CLEANERS } from '../../store';
 import PhotoLightbox from '../../components/PhotoLightbox';
 
+function maskAddress(address: string): string {
+  const match = address.match(/^(.+?[시도])\s+(.+?[구군])\s+(.+?[동읍면리가로길])/);
+  if (match) return `${match[1]} ${match[2]} ${match[3]}`;
+  const parts = address.split(/\s+/);
+  return parts.slice(0, Math.min(3, parts.length)).join(' ') + (parts.length > 3 ? ' 근처' : '');
+}
+
 export default function RequestDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -86,7 +93,7 @@ export default function RequestDetail() {
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">주소</span>
-            <span className="text-gray-900 font-medium text-right max-w-[60%]">{request.address}</span>
+            <span className="text-gray-900 font-medium text-right max-w-[60%]">{maskAddress(request.address)}</span>
           </div>
           {request.notes && (
             <div>
