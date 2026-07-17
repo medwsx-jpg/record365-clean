@@ -31,6 +31,48 @@ const MY_STATUS_CONFIG: Record<string, { label: string; bg: string; text: string
   as_requested: { label: 'A/S 요청', bg: 'bg-red-100', text: 'text-red-700' },
 };
 
+// 더미 예정 의뢰 (매칭 완료 + 며칠 뒤 예정)
+function getDemoScheduled(): CleaningRequest[] {
+  const today = new Date();
+  const d = (offset: number) => {
+    const dt = new Date(today);
+    dt.setDate(dt.getDate() + offset);
+    return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+  };
+  return [
+    {
+      id: 'demo-1',
+      clientId: 'demo-client-1',
+      category: 'home',
+      date: d(3),
+      time: '10:00',
+      address: '서울 강남구 역삼동 823-4',
+      price: 120000,
+      notes: '거실, 주방, 화장실 2개',
+      photos: [],
+      status: 'matched',
+      cleanerId: 'demo-cleaner',
+      cleanerName: '나',
+      createdAt: new Date(today.getTime() - 86400000).toISOString(),
+    },
+    {
+      id: 'demo-2',
+      clientId: 'demo-client-2',
+      category: 'office',
+      date: d(7),
+      time: '14:00',
+      address: '서울 서초구 서초대로 398',
+      price: 200000,
+      notes: '사무실 전체 청소',
+      photos: [],
+      status: 'matched',
+      cleanerId: 'demo-cleaner',
+      cleanerName: '나',
+      createdAt: new Date(today.getTime() - 43200000).toISOString(),
+    },
+  ];
+}
+
 export default function CleanerHome() {
   const navigate = useNavigate();
   const [sort, setSort] = useState<SortMode>('newest');
@@ -39,8 +81,11 @@ export default function CleanerHome() {
 
   const loadRequests = async () => {
     const all = await api.getRequests();
-    setRequests(all.filter((r) => r.status === 'pending'));
-    setMyRequests(all.filter((r) => ['matched', 'in_progress', 'waiting_confirm', 'as_requested'].includes(r.status)));
+    const realPending = all.filter((r) => r.status === 'pending');
+    const realMy = all.filter((r) => ['matched', 'in_progress', 'waiting_confirm', 'as_requested'].includes(r.status));
+    setRequests(realPending);
+    // 실제 내 의뢰가 없으면 더미 예정 데이터 표시
+    setMyRequests(realMy.length > 0 ? realMy : getDemoScheduled());
   };
 
   useEffect(() => {
@@ -58,7 +103,10 @@ export default function CleanerHome() {
     return a.price - b.price;
   });
 
+  const isDemo = (id: string) => id.startsWith('demo-');
+
   const handleMyClick = (req: CleaningRequest) => {
+    if (isDemo(req.id)) return; // 더미 데이터는 클릭 무시
     if (req.status === 'matched') navigate(`/clean/cleaner/prep/${req.id}`);
     else if (req.status === 'in_progress') navigate(`/clean/cleaner/progress/${req.id}`);
     else if (req.status === 'waiting_confirm') navigate(`/clean/cleaner/complete/${req.id}`);
@@ -78,12 +126,19 @@ export default function CleanerHome() {
           <div className="space-y-2 mb-4">
             {myRequests.map((req) => {
               const cfg = MY_STATUS_CONFIG[req.status] || { label: req.status, bg: 'bg-gray-100', text: 'text-gray-600' };
+              const daysUntil = Math.ceil((new Date(req.date).getTime() - Date.now()) / 86400000);
+              const dDayLabel = daysUntil > 0 ? `D-${daysUntil}` : daysUntil === 0 ? 'D-Day' : '';
               return (
                 <button key={req.id} onClick={() => handleMyClick(req)}
-                  className="w-full bg-white rounded-xl border border-gray-200 p-4 text-left shadow-sm active:bg-gray-50 transition-colors">
+                  className={`w-full bg-white rounded-xl border border-gray-200 p-4 text-left shadow-sm transition-colors ${isDemo(req.id) ? 'cursor-default' : 'active:bg-gray-50'}`}>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-800">{CATEGORY_LABELS[req.category]} · {req.date}</span>
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>{cfg.label}</span>
+                    <span className="text-sm font-medium text-gray-800">{CATEGORY_LABELS[req.category]} · {req.date} {req.time}</span>
+                    <div className="flex items-center gap-1.5">
+                      {dDayLabel && (
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">{dDayLabel}</span>
+                      )}
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>{cfg.label}</span>
+                    </div>
                   </div>
                   <p className="text-sm text-gray-600 truncate">{req.address}</p>
                   <p className="text-sm font-bold text-green-600 mt-1">{formatPrice(req.price)}원</p>
